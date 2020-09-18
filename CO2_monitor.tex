@@ -1,0 +1,289 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Author:  Alf Köhn-Seemann								%
+% Email:   alf.koehn@gmail.com								%
+% License: CC BY-SA 4.0									%
+% Website: https://github.com/alfkoehn/CO2_monitor		%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[12pt,a4paper]{article}
+
+%allows to type the umlaute directly
+%\usepackage[utf8]{inputenc}
+
+%for including graphics
+\usepackage{graphicx}
+
+%for links (only for self-repo)
+%\usepackage[dvipdfm]{hyperref}
+\usepackage{hyperref}
+
+% to have [2-5] instead of [2,3,4,5]
+\usepackage{cite}
+
+% nice rules/lines (useful in tabulars)
+\usepackage{booktabs}
+
+\usepackage[x11names]{xcolor}
+
+% for source code listings
+\usepackage{listings}
+
+% for writing the eurosymbol
+\usepackage{eurosym}
+
+% for e.g. align
+\usepackage{amsmath}
+
+% make iso-today format
+% would also work: \usepackage[yyyymmdd]{datetime2}
+\def\myisodate{\leavevmode\hbox{\the\year-\twodigits\month-\twodigits\day}}
+\def\twodigits#1{\ifnum#1<10 0\fi\the#1}
+
+%abbreviations used in bibliography
+%\newcommand{\PoP}[0]{Phys. Plasmas}
+
+\newcommand*{\mathcolor}{}
+\def\mathcolor#1#{\mathcoloraux{#1}}
+\newcommand*{\mathcoloraux}[3]{%
+  \protect\leavevmode
+  \begingroup
+    \color#1{#2}#3%
+  \endgroup
+}
+
+\newcommand{\inchsign}{^{\prime\prime}}
+
+\newcommand{\coo}{\ensuremath{\mathrm{CO_2}~}}
+
+\definecolor{mycodegreen}{rgb}{0,0.6,0}
+\definecolor{mycodegray}{rgb}{0.5,0.5,0.5}
+\definecolor{mycodepurple}{rgb}{0.58,0,0.82}
+\definecolor{mycodebackcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{myArduinoStyle}{
+    backgroundcolor=\color{mycodebackcolour},	% choose background color
+    basicstyle=\ttfamily\scriptsize,       	% font and size of fonts are used for the code
+    commentstyle=\color{mycodegreen}\textit,	% comment style
+    keywordstyle=\color{magenta}\bfseries,	% keyword style
+    numberstyle=\tiny\color{mycodegray},		% style for line numbers
+    stringstyle=\color{mycodepurple},			% string literal style
+    breakatwhitespace=false,         			% sets if automatic breaks should only happen at whitespace
+    breaklines=true,							% sets automatic line breaking                
+    captionpos=b,                    			% sets caption-position to bottom
+    frame=single,	                  			% adds a frame around code
+    keepspaces=true,                 			% keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+    language=C,									% language of code
+    numbers=left,                    			% where to put line numbers (none, left, right) 
+    numbersep=5pt,                  			% distance from line numbers to code
+    rulecolor=\color{black},         			% if not set, frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+    showspaces=false,                			% show spaces adding particular underscores (overrides 'showstringspaces')
+    showstringspaces=false,					% underline spaces within strings only
+    showtabs=false,                  			% show tabs within strings adding particular underscore
+    tabsize=4,									% sets default tabsize to 4 spaces
+%    title=\lstname                   			% show filename of files included with \lstinputlisting; also try caption instead of title
+}
+\lstset{style=myArduinoStyle}				% enables the style 'mystyle', call it with another style to switch to another style
+
+
+%style for bibliography
+%\bibliographystyle{unsrt.bst}
+\bibliographystyle{unsrtDOI.bst}
+% doi+url: plainnat, unsrtnat, abbrvnat
+
+\begin{document}
+
+\title{A CO$_2$ monitor as an introductory microelectronics project helping to slow-down the spread of the corona virus and ensuring a healthy learning and working environment}
+
+\author{A.~K\"{o}hn-Seemann, \href{mailto:alf.koehn@gmail.com}{alf.koehn@gmail.com}%$^{1}$%, %
+		%B.E.~Eliasson$^{2}$, %
+		%L.~Holland$^{3}$, %
+		%R.G.L.~Vann$^{3}$%
+		%D.~Woodward$^{2}$%
+		}
+		
+\date{\myisodate}
+
+%\address{$^1$Institut f\"{u}r Grenzfl\"{a}chenverfahrenstechnik und Plasmatechnologie, Universit\"{a}t Stuttgart, 70569 Stuttgart, Germany}
+%\address{$^2$Department of Physics, SUPA, University of Strathclyde, Glasgow, Scotland, G4 ONG, United Kingdom}
+%\address{$^3$York Plasma Institute, Department of Physics, University of York, York YO10 5DD, United Kingdom}
+%\ead{alf.koehn@gmail.com}
+
+\maketitle
+
+\begin{abstract}
+This paper describes the setup of a simple yet reliable \coo monitor which is based on open-source microelectronics hardware. The monitor is intended to be used in class rooms, lecture halls or offices and can be constructed as a joint students project. It was motivated by recent discussions on the role of aerosols being part of exhaled air to spread the corona virus. The aerosol concentration in air is correlated with the \coo concentration. Measuring the latter can thus help to slow-down the spread of the corona-virus. The program code used for the \coo monitor and this documentation is available as a GitHub repository to allow to updates and improvements. 
+\\ \quad \\ License for this document: \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0}
+%\\ \quad \\ \textbf{version: \myisodate} \\ \quad \\ \textbf{FOR INTERNAL USE ONLY}
+\end{abstract}
+
+
+%\pacs{52.25.Xz, 52.35.Hr, 52.35.Mw, 52.50.Sw, 52.55.Hc, 52.70.Ds, 52.70.Gw, 52.70.Kz}
+% 47.11.Bc for finite difference methods
+% Uncomment for Submitted to journal title message
+%\submitto{\NJP}
+% Comment out if separate title page not required
+%\maketitle
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Introduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}\label{s:intro}
+It is generally accepted that the \coo concentration in a class room has an influence on students' activities, their ability to study and learn~\cite{TWARDELLA2012,GAIHRE2014}, or on their health and thus attendance~\cite{SHENDELL2004}. The same applies of course to office environments~\cite{ALLEN2016}. The major source of \coo in a class room is the exhaled air of the students (and teachers). It thus increases over time but can also be relatively easy controlled by proper ventilation. Monitoring the \coo concentration over time provides thus a simple way to ensure an productive and healthy learning environment. 
+
+In addition to \coo, exhaled air consists of aerosols (among other things). In preliminary studies, it has been recently discovered that the aerosols of patients being infected with Sars-CoV-2, might contain viable virus concentrations which are large enough to cause further infections if somebody else inhales those aerosols~\cite{LEDNICKY2020,MORAWSKA2020,KOHANSKI2020}. With half-life periods of the virus on aerosols on the order of 1 hour~\cite{DOREMALEN2020}, it becomes evident that proper ventilation, strongly reducing the aerosol concentration, can help to prevent hidden infections, i.e.\ infections where the infected person is not (yet) aware of their infection but already contagious. Since aerosols and \coo are both parts of exhaled air, measuring the \coo concentration in a room provides an easy accessible approximation for the aerosol concentration~\cite{HARTMANN2020}.
+
+Here we present a simple and cost effective, yet reliable way to monitor the \coo concentration. Widely available microelectronic components are used which can be easily programmed via open source software platforms allowing to modify and extend the example presented in this paper. Students can build the detectors in class as a joint project which might serve to raise interest in electronics or the underlying physical and chemical processes. 
+
+This work was inspired by a project of the \textit{Hochschule Trier}~\cite{BIRKENFELD2020}, where the design and construction of a \coo measuring device is suggested as a students' project, allowing to discuss a variety of scientific topics during the course of the project. In addition, a few posts from different forums served as an inspiration~\cite{BOYLES2020,METROPOL2020,OMBRA2020,ZENTRIS2020}. Furthermore, a small number of GitHub repositories using the same \coo are available~\cite{MKETZ2020,NETZBASTELN2020,PAULVHA2020} (we would like to recommend the interested reader in particular to the repository by paulvha~\cite{PAULVHA2020} as it contains a rather large number of examples).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CO2 monitor %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \coo monitor}
+The \coo monitor is based on the microelectronic sensor SCD30 which measures the \coo concentration and also provides measurements of the ambient temperature and relative humidity~\cite{SENSIRION2020B}. Using Arduino as a programing language and some microcontroller, it is straightforward to get the sensor running and outputting data, thanks to the examples available in the libraries provided by SparkFun~\cite{SPARKFUN2020}. Using the Arduino IDE~\cite{ARDUINOIDE2020}, which is available for all major operating systems, the corresponding libraries can be simply included via the library manager. 
+
+To make the \coo monitor visually appealing, we decided to output the measurement to an OLED display (which is also very cheap and available in a large variety of sizes and configurations). Due to the widespread usage of such displays, they can also be directly included via the library manager in the Arduino IDE. In addition to just showing some numbers, we have included a red LED which lights up as soon as some threshold value of the \coo concentration is reached, indicating the need for ventilation. One could also think of a traffic light design, where first a yellow LED lights up at a slightly lower threshold value.
+
+As controller we decided to use the low-cost open source NodeMCU board~\cite{NODEMCU2020}, as it offers enough flexibility to further extend the functionality of the \coo monitor. Of particular interest might be the WiFi capability allowing for example to write the measured values to a web-server where they can then accessed via a web-browser or an app on a smartphone. 
+
+A prototype of the \coo monitor is shown in Fig.~\ref{f:CO2_monitor_photo}. As one can see, it is not enclosed in some box to still allow easy access for modifications. The idea of this prototype was rather to show that the general principle of the \coo monitor is working and not to provide a polished final product. The prototype is ready to be used in a class room or lecture hall, although it might be worth to mount everything into a box which is not only visually more appealing but provides also some protection.
+\begin{figure}[ht]
+\center
+\includegraphics[height=.48\textwidth]{figs/CO2_detector_photo2.jpg}
+\hspace{1em}
+\includegraphics[height=.48\textwidth]{figs/CO2_detector_photo1.jpg}
+\caption{Assembled and working prototype of the \coo monitor, \textit{(left)} with a measured \coo concentration below the threshold and \textit{(right)} above it (note the red LED).}
+\label{f:CO2_monitor_photo}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Required parts}
+The \coo monitor as presented here consists of a number of parts for which it is not important to use the exact same model. The only component which should not be replaced is the \coo measuring device, the SCD30. Note that the program code discussed in Sec.~\ref{s:code} is tailored for the NodeMCU ESP8266, replacing that component would thus require small adjustments to the code. 
+
+The parts used for the prototype of the \coo monitor are listed in Table~\ref{t:parts}. The display can be easily replaced by an OLED of larger size. One could also use multiple displays, which would require to take care of proper addressing the display and thus add a little bit of complexity to the code (and the assembly). 
+\begin{table}\label{t:parts}
+\center
+\begin{tabular}{cccc}\toprule
+Element & Quantity & Price \\\hline
+SCD30 (\coo sensor) & 1 & $60\,$\euro \\
+NodeMCU EPS8266 & 1 & $8\,$\euro \\
+$0.91\inchsign$ OLED display	& 1	& $5\,$\euro \\
+red LED					& 1 	& $0.2\,$\euro \\
+$220\,\mathrm{Omega}$ resistor	& 1	& $.1\,$\euro \\
+mini breadboard		& 1 & $4\,$\euro \\
+breadboard cables	& 10 & $4\,$\euro \\
+pin header			& 1 & $0.5\,$\euro \\
+micro USB cable		& 1 & $3\,$\euro \\
+\bottomrule
+\end{tabular}
+\caption{Components used for the \coo monitor as presented in this paper (note that the prices were obtained in 09/2020 and may vary).}
+\end{table}
+
+The usage of a breadboard was motivated by educational purposes as this allows very easy assembly without the need to solder anything. It can, however, directly be replaced by a stripboard or completely omitted and use only cables or pin headers (which would require some soldering). 
+
+Note that the prices as listed in the table can be pushed down (significantly for some of the components) when ordering larger quantities. 
+
+For the prototype design of the \coo monitor we have decided to leave out a proper casing. One could either use a standard-sized case, or design one and print it for example on a 3D printer or re-use/recycle some old boxes. It is however important to correctly position the SCD30 inside the box: as described in a manufacturer's document~\cite{SENSIRION2020A}, the sensor is ideally placed as close as possible to the box's outer shell and to a large opening to be properly exposed to the ambient. The box should be as small as possible to get fast response times to changes in the ambient air. The SCD30 should also be isolated from direct air flow, as the corresponding changes in pressure (due to the air flow) would lead to increased noise and thus reduced accuracy in the measurements. It is also recommended to not directly place the sensor above heat sources like for example microcontrollers.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CO2 Sensor: NDIR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \coo sensor}
+The SCD30 has been chosen because it performs direct measurements of the \coo concentration. Cheaper sensors often measure the concentration of volatile organic compounds (VOC) and then assume a correlation between the two quantities. This can, however, lead to wrong values of the \coo concentration since VOC can be emitted from a variety of chemicals. Although VOCs are also known to cause health problems, here we are explicitly interested in the \coo concentration, as discussed in Sec.~\ref{s:intro}. For a discussion about monitoring VOC and \coo concentration with self-assembled devices we would like to point the interested reader 
+to e.g.\ Ref.~\cite{CHIESA2019}.
+
+\subsection{Technical specifications}
+According to the datasheet of the SCD30~\cite{SENSIRION2020B}, the \coo sensor has a measurement range of $0 - 40,000\,\mathrm{ppm}$ with an accuracy of $\pm 30\,\mathrm{ppm}$.
+The supply voltage needs to be between $3.3$ and $5\,\mathrm{V}$ which allows to use a variety of microcontrollers. The drawn current is specified to be on average $19\,\mathrm{mA}$ with a maximum value of $75\,\mathrm{mA}$. With a sensor lifetime of $15$ years, the SCD30 offers a reliable system to permanently monitor the \coo concentration.
+
+\subsection{Nondispersive infrared technique}
+\begin{figure}[ht]
+\center
+\includegraphics[width=.65\textwidth]{figs/NDIR_principle_v1.png}
+\caption{Sketch of a sensor using the nondispersive infrared technique to measure \coo concentration.}
+\label{f:NDIR_sketch}
+\end{figure}
+The \coo concentration is measured using the so-called \textit{nondispersive infrared} technique (NDIR). It is the most common sensor type used in industry to measure the \coo concentration. It's principle is sketched in Fig.~\ref{f:NDIR_sketch}. A light source emits infrared light which travels through a tube filled with a sample of the surrounding air. The spectrum of the emitted light includes the unique $4.26\,\mu\mathrm{m}$ absorption band of \coo which is absorbed by them. At the end of the tube, the remaining light hits an optical filter that allows only that specific wavelength of 4.26 pass. A detector then collects the remaining light. The difference between the amount of light emitted by the source and received by the detector is due to the \coo molecules in the tube which then allows to calculate the \coo concentration. 
+
+Using folded optics, i.e. waveguides, for the tube and diodes for the infrared source and detector, allows to small sizes of the overall sensor on the order of just a few centimeters.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Assembling %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Assembly}
+\begin{figure}[ht]
+\center
+\includegraphics[height=.48\textwidth]{figs/CO2_detector_bb.png}
+\caption{Schematic of a prototype of the \coo monitor.}
+\label{f:CO2_fritzing}
+\end{figure}
+The \coo monitor can be assembled in various ways, here we will restrict ourselves to the case of a simple prototype design on a breadboard as shown in Fig.~\ref{f:CO2_fritzing}. The connection between the NodeMCU (with the ESP8266) and the SCD30 sensor is as follows:\\
+
+\begin{tabular}{rcl}\toprule
+	NodeMCU		& & SCD30\\\hline
+	\texttt{GND}		& $\mathcolor{black}{\boldsymbol{\longrightarrow}}$	& \texttt{GND}\\
+	$3.3\,\mathrm{V}$	& $\mathcolor{red}{\boldsymbol{\longrightarrow}}$		& \texttt{VIN}\\
+	\texttt{D2/GPIO4}	& $\mathcolor{orange}{\boldsymbol{\longrightarrow}}$	& \texttt{RX/SDA}\\
+	\texttt{D1/GPIO5}	& $\mathcolor{Yellow3}{\boldsymbol{\longrightarrow}}$	& \texttt{TX/SCL}\\
+	\texttt{GND}		& $\mathcolor{black}{\boldsymbol{\longrightarrow}}$	& \texttt{SEL}\\	
+	\bottomrule
+\end{tabular}\\
+\quad\\
+
+The NodeMCU then needs to be connected to the OLED display as follows:\\
+
+\begin{tabular}{rcl}\toprule
+	NodeMCU		& & OLED display\\\hline
+	\texttt{GND}		& $\mathcolor{black}{\boldsymbol{\longrightarrow}}$	& \texttt{GND}\\
+	$3.3\,\mathrm{V}$	& $\mathcolor{red}{\boldsymbol{\longrightarrow}}$		& \texttt{VCC}\\
+	\texttt{D2/GPIO4}	& $\mathcolor{orange}{\boldsymbol{\longrightarrow}}$ 	& \texttt{SDA}\\
+	\texttt{D1/GPIO5}	& $\mathcolor{Yellow3}{\boldsymbol{\longrightarrow}}$	& \texttt{SCL}\\
+	\bottomrule
+\end{tabular}\\
+\quad\\
+
+It is of course also possible to directly connect the respective \texttt{SDA} and \texttt{SCL} pins of the OLED and the SCD30, as shown in Fig.~\ref{f:CO2_fritzing}, instead of connecting those pins between the SCD30 and the NodeMCU. The red LED is connected with its anode, the longer leg, to pin \texttt{D8/GPIO15} of the NodeMCU and with its cathode, the shorter leg, via a $220\,\mathrm{Omega}$ resistor (to limit the current) to ground.  
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The program code}\label{s:code}
+Arduino is used as programming language in this project due to its widespread usage and large numbers of libraries available for various hardware components. The Arduino IDE library manager allows to directly install a proper Arduino library for the SCD30, alternatively the library is available as a GitHub repository~\cite{SPARKFUN2020}.
+As for the NodeMCU and the OLED display, the Arduino IDE library manager is able to provide the required libraries.
+
+The source code for the \coo monitor as described in this paper is available on GitHub~\cite{KOEHN2020}, in order to be able to update and extend it. Nevertheless, we have also included the code in this paper, to provide a complete description of the project. The include statements of the code are listed in Listing \ref{lst:include}. The \texttt{Adafruit\_GFX.h} and \texttt{Adafruit\_SSD1306.h} libraries are used for the OLED display and are required to be installed via the library manager of the Arduino IDE beforehand. Note that the display size in pixels needs to be set correctly and can vary. Note that also he \texttt{SparkFun\_SCD30\_Arduino\_Library.h} also needs to be installed via the library managed.
+\lstinputlisting[firstline=19, lastline=37, caption={Loading the required libraries.}, label={lst:include}]%
+{code/CO2_monitor.ino} 
+
+Listing~\ref{lst:setup} shows the setup of the code, where the serial monitor is initialized, followed by the diode, the OLED display, and finally the SCD30. 
+\lstinputlisting[firstline=40, lastline=90, caption={Setup code.}, label={lst:setup}]%
+{code/CO2_monitor.ino}
+
+The main code is given in Listing~\ref{lst:main}. First, the data is obtained from the SCD30 sensor and then passed to a function outputting it to the serial monitor and then to another function, printing it on the OLED display. Listings~\ref{lst:printSerial} and \ref{lst:printOLED} show the code for the two latter functions.
+\lstinputlisting[firstline=92, lastline=126, caption={Main loop which is executed repeatedly.}, label={lst:main}]%
+{code/CO2_monitor.ino} 
+\lstinputlisting[firstline=128, lastline=136, caption={Function which prints data to the serial console.},label={lst:printSerial}]%
+{code/CO2_monitor.ino} 
+\lstinputlisting[firstline=138, lastline=165, caption={Function which prints data to the OLED display.}, label={lst:printOLED}]%
+{code/CO2_monitor.ino} 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% acknowledgments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Acknowledgments}
+The author is indebted to the efforts of the open-source software community.
+
+
+\bibliography{CO2_monitor}
+
+\end{document}
