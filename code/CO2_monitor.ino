@@ -20,7 +20,8 @@
 #include <Adafruit_GFX.h>         // for writing to display
 #include <Adafruit_SSD1306.h>     // for writing to display
 
-#define WARNING_DIODE_PIN D8
+#define CO2_THRESHOLD 1500        // threshold for warning
+#define WARNING_DIODE_PIN D8      // NodeMCU pin for red LED
 
 #define SCREEN_WIDTH 128          // OLED display width in pixels
 #define SCREEN_HEIGHT 32          // OLED display height in pixels
@@ -94,11 +95,8 @@ void loop() {
   float 
     co2,
     temperature,
-    humidity,
-    co2_threshold;
+    humidity;
   
-  co2_threshold  = 1500;
-
   if (airSensor.dataAvailable()) {
     // get data from SCD30 sensor
     co2 = airSensor.getCO2();
@@ -115,9 +113,9 @@ void loop() {
     Serial.println("Waiting for new data");
 
   // if CO2-value is too high, issue a warning  
-  if (co2 >= co2_threshold) {
+  if (co2 >= CO2_THRESHOLD) {
     digitalWrite(WARNING_DIODE_PIN, HIGH);
-  } else if (co2 < co2_threshold) {
+  } else if (co2 < CO2_THRESHOLD) {
     digitalWrite(WARNING_DIODE_PIN, LOW);
   }
 
