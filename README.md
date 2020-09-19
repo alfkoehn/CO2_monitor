@@ -1,1 +1,3 @@
-# CO2_monitor
+# CO2 monitor
+
+This project describes the setup of a simple yet reliable CO_2 monitor which is based on open-source microelectronics hardware. The monitor is intended to be used in class rooms, lecture halls or offices and can be constructed as a joint students project. It was motivated by recent discussions on the role of aerosols being part of exhaled air to spread the corona virus. The aerosol concentration in air is correlated with the CO2 concentration. Measuring the latter can thus help to slow-down the spread of the corona-virus. The program code used for the CO2 monitor and this documentation is available as a GitHub repository to allow to updates and improvements. 
