@@ -132,7 +132,7 @@ It is generally accepted that the \coo concentration in a class room has an infl
 
 In addition to \coo, exhaled air consists of aerosols (among other things). In preliminary studies, it has been recently discovered that the aerosols of patients being infected with Sars-CoV-2, might contain viable virus concentrations which are large enough to cause further infections if somebody else inhales those aerosols~\cite{LEDNICKY2020,MORAWSKA2020,KOHANSKI2020}. With half-life periods of the virus on aerosols on the order of 1 hour~\cite{DOREMALEN2020}, it becomes evident that proper ventilation, strongly reducing the aerosol concentration, can help to prevent hidden infections, i.e.\ infections where the infected person is not (yet) aware of their infection but already contagious. Since aerosols and \coo are both parts of exhaled air, measuring the \coo concentration in a room provides an easy accessible approximation for the aerosol concentration~\cite{HARTMANN2020}.
 
-Here we present a simple and cost effective, yet reliable way to monitor the \coo concentration. Widely available microelectronic components are used which can be easily programmed via open source software platforms allowing to modify and extend the example presented in this paper. Students can build the detectors in class as a joint project which might serve to raise interest in electronics or the underlying physical and chemical processes. 
+Here we present a simple and cost effective, yet reliable way to monitor the \coo concentration. Widely available microelectronic components are used which can be easily programmed via open source software platforms allowing to modify and extend the example presented in this paper. Students can build the detectors in class as a joint project which might serve to raise interest in electronics or the underlying physical and chemical processes~\cite{WATZKA2011}. 
 
 This work was inspired by a project of the \textit{Hochschule Trier}~\cite{BIRKENFELD2020}, where the design and construction of a \coo measuring device is suggested as a students' project, allowing to discuss a variety of scientific topics during the course of the project. In addition, a few posts from different forums served as an inspiration~\cite{BOYLES2020,METROPOL2020,OMBRA2020,ZENTRIS2020}. Furthermore, a small number of GitHub repositories using the same \coo are available~\cite{MKETZ2020,NETZBASTELN2020,PAULVHA2020} (we would like to recommend the interested reader in particular to the repository by paulvha~\cite{PAULVHA2020} as it contains a rather large number of examples).
 
@@ -143,7 +143,7 @@ This work was inspired by a project of the \textit{Hochschule Trier}~\cite{BIRKE
 \section{The \coo monitor}
 The \coo monitor is based on the microelectronic sensor SCD30 which measures the \coo concentration and also provides measurements of the ambient temperature and relative humidity~\cite{SENSIRION2020B}. Using Arduino as a programing language and some microcontroller, it is straightforward to get the sensor running and outputting data, thanks to the examples available in the libraries provided by SparkFun~\cite{SPARKFUN2020}. Using the Arduino IDE~\cite{ARDUINOIDE2020}, which is available for all major operating systems, the corresponding libraries can be simply included via the library manager. 
 
-To make the \coo monitor visually appealing, we decided to output the measurement to an OLED display (which is also very cheap and available in a large variety of sizes and configurations). Due to the widespread usage of such displays, they can also be directly included via the library manager in the Arduino IDE. In addition to just showing some numbers, we have included a red LED which lights up as soon as some threshold value of the \coo concentration is reached, indicating the need for ventilation. One could also think of a traffic light design, where first a yellow LED lights up at a slightly lower threshold value.
+To make the \coo monitor visually appealing, we decided to output the measurement to an OLED display (which is also very cheap and available in a large variety of sizes and configurations). Due to the widespread usage of such displays, they can also be directly included via the library manager in the Arduino IDE. In addition to just showing some numbers, we have included a red LED which lights up as soon as some threshold value of the \coo concentration is reached, indicating the need for ventilation. One could also think of a traffic light design, where first a yellow LED lights up at a slightly lower threshold value. The \textit{Federation of European Heating, Ventilation and Air Conditioning associations (REHVA)} recommend to issue a warning, corresponding to an orange light, when a value of $800\,\mathrm{ppm}$ is reached and prompt to trigger some action like ventilation, corresponding to a red light, when $1000\,\mathrm{ppm}$ are reached~\cite{REHVA2020}. The \textit{Federal Ministry of Labour and Social Affairs} of Germany also states a threshold value of $1000\,\mathrm{ppm}$ that should not be passed~\cite{BMA2020}. Note that a value of $400\,\mathrm{ppm}$ is the typical \coo concentration of air.
 
 As controller we decided to use the low-cost open source NodeMCU board~\cite{NODEMCU2020}, as it offers enough flexibility to further extend the functionality of the \coo monitor. Of particular interest might be the WiFi capability allowing for example to write the measured values to a web-server where they can then accessed via a web-browser or an app on a smartphone. 
 
@@ -257,23 +257,23 @@ It is of course also possible to directly connect the respective \texttt{SDA} an
 % code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The program code}\label{s:code}
-Arduino is used as programming language in this project due to its widespread usage and large numbers of libraries available for various hardware components. The Arduino IDE library manager allows to directly install a proper Arduino library for the SCD30, alternatively the library is available as a GitHub repository~\cite{SPARKFUN2020}.
+Arduino is used as programming language in this project due to its widespread usage and large numbers of libraries available for various hardware components. The Arduino IDE library manager allows to directly install a proper Arduino library for the SCD30, alternatively the library is available as a GitHub repository~\cite{SPARKFUN2020}. For a tutorial on how to install libraries within the Arduino IDE, see Ref.~\cite{SPARKFUN2020A}.
 As for the NodeMCU and the OLED display, the Arduino IDE library manager is able to provide the required libraries.
 
 The source code for the \coo monitor as described in this paper is available on GitHub~\cite{KOEHN2020}, in order to be able to update and extend it. Nevertheless, we have also included the code in this paper, to provide a complete description of the project. The include statements of the code are listed in Listing \ref{lst:include}. The \texttt{Adafruit\_GFX.h} and \texttt{Adafruit\_SSD1306.h} libraries are used for the OLED display and are required to be installed via the library manager of the Arduino IDE beforehand (alternatively, they are also available on GitHub~\cite{ADAFRUIT2020A} for manual installation). Note that the display size in pixels needs to be set correctly and can vary. The \texttt{SparkFun\_SCD30\_Arduino\_Library.h} also needs to be installed via the library managed (or manually from the GitHub repository~\cite{SPARKFUN2020}).
-\lstinputlisting[firstline=19, lastline=38, caption={Loading the required libraries.}, label={lst:include}]%
+\lstinputlisting[firstline=21, lastline=45, caption={Loading the required libraries.}, label={lst:include}]%
 {code/CO2_monitor.ino} 
 
 Listing~\ref{lst:setup} shows the setup of the code, where the serial monitor is initialized, followed by the diode, the OLED display, and finally the SCD30. 
-\lstinputlisting[firstline=41, lastline=91, caption={Setup code.}, label={lst:setup}]%
+\lstinputlisting[firstline=48, lastline=96, caption={Setup code.}, label={lst:setup}]%
 {code/CO2_monitor.ino}
 
 The main code is given in Listing~\ref{lst:main}. First, the data is obtained from the SCD30 sensor and then passed to a function outputting it to the serial monitor and then to another function, printing it on the OLED display. Listings~\ref{lst:printSerial} and \ref{lst:printOLED} show the code for the two latter functions.
-\lstinputlisting[firstline=93, lastline=124, caption={Main loop which is executed repeatedly.}, label={lst:main}]%
+\lstinputlisting[firstline=98, lastline=131, caption={Main loop which is executed repeatedly.}, label={lst:main}]%
 {code/CO2_monitor.ino} 
-\lstinputlisting[firstline=126, lastline=134, caption={Function which prints data to the serial console.},label={lst:printSerial}]%
+\lstinputlisting[firstline=133, lastline=141, caption={Function which prints data to the serial console.},label={lst:printSerial}]%
 {code/CO2_monitor.ino} 
-\lstinputlisting[firstline=136, lastline=163, caption={Function which prints data to the OLED display.}, label={lst:printOLED}]%
+\lstinputlisting[firstline=143, lastline=170, caption={Function which prints data to the OLED display.}, label={lst:printOLED}]%
 {code/CO2_monitor.ino} 
 
 

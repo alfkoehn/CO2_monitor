@@ -10,6 +10,8 @@
  Email:   alf.koehn@gmail.com
  License: MIT
 
+ All required libraries are available via the library manager.
+
  Hardware Connections:
  Attach NodeMCU to computer using a USB cable.
  Connect OLED display, SCD30, red LED to NodeMCU.
@@ -19,9 +21,17 @@
 #include <Wire.h>                 // for I2C communication
 #include <Adafruit_GFX.h>         // for writing to display
 #include <Adafruit_SSD1306.h>     // for writing to display
+#include "SparkFun_SCD30_Arduino_Library.h"
 
-#define CO2_THRESHOLD 1500        // threshold for warning
+// activate debugging
+//   true:  print info + data to serial monitor
+//   false: serial monitor is not used
+#define DEBUG true
+
+#define CO2_CRITICAL 1500         // threshold for warning
 #define WARNING_DIODE_PIN D8      // NodeMCU pin for red LED
+
+#define MEASURE_INTERVAL 2        // seconds, minimum: 2 
 
 #define SCREEN_WIDTH 128          // OLED display width in pixels
 #define SCREEN_HEIGHT 32          // OLED display height in pixels
@@ -32,17 +42,15 @@
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// install library via library manager
-// or click here: http://librarymanager/All#SparkFun_SCD30
-#include "SparkFun_SCD30_Arduino_Library.h"
 SCD30 airSensor;
 
 
 void setup() {
-  // initialize serial monitor at baud rate of 115200
-  Serial.begin(115200);
-  
-  Serial.println("Using the SCD30 to get CO2 concentration (among other things)");
+  if (DEBUG == true) {
+    // initialize serial monitor at baud rate of 115200
+    Serial.begin(115200);
+    Serial.println("Using SCD30 to get: CO2 concentration, temperature, humidity");
+  }
  
   Wire.begin();
 
@@ -51,30 +59,26 @@ void setup() {
 
   // SSD1306_SWITCHCAPVCC: generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
-    Serial.println(F("SSD1306 allocation failed"));
+    if (DEBUG == true) 
+      Serial.println(F("SSD1306 allocation failed"));
     for(;;); // Don't proceed, loop forever
   }
 
   // Show initial display buffer contents on the screen --
   // the library initializes this with an Adafruit splash screen.
-  display.display();
+  display.display();              // initialize display
+                                  // library will show Adafruit logo
+  delay(2000);                    // pause for 2 seconds
+  display.clearDisplay();         // clear the buffer
+  display.setTextSize(1);         // has to be set initially
+  display.setTextColor(WHITE);    // has to be set initially
 
-  // Pause for 2 seconds
-  delay(2000); 
-
-  // Clear the buffer
-  display.clearDisplay();
-
-  // text size and color have to be set
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-
+  // move cursor to position and print text there
   display.setCursor(2,5);
   display.println("SCD30 test program");
   display.println("twitter.com/formbar");
 
-  // apply changes to display
-  display.display();  
+  display.display();              // write display buffer to display
 
   // turn warning LED on and off to test it
   digitalWrite(WARNING_DIODE_PIN, HIGH);
@@ -84,9 +88,10 @@ void setup() {
   // initialize SCD30
   // SCD30 has data ready every two seconds
   if (airSensor.begin() == false) {
-   Serial.println("Air sensor not detected. Please check wiring. Freezing...");
-   while (1)
-     ;
+    if (DEBUG == true)
+      Serial.println("Air sensor not detected. Please check wiring. Freezing...");
+    while (1)
+      ;
   }
 }
 
@@ -99,28 +104,30 @@ void loop() {
   
   if (airSensor.dataAvailable()) {
     // get data from SCD30 sensor
-    co2 = airSensor.getCO2();
+    co2         = airSensor.getCO2();
     temperature = airSensor.getTemperature();
-    humidity = airSensor.getHumidity();
+    humidity    = airSensor.getHumidity();
 
     // print data to serial console
-    printToSerial(co2, temperature, humidity);
+    if (DEBUG == true)
+      printToSerial(co2, temperature, humidity);
 
     // print data to OLED display
     printToOLED(co2, temperature, humidity);
   }
   else
-    Serial.println("Waiting for new data");
+    if (DEBUG == true)
+      Serial.println("Waiting for new data");
 
   // if CO2-value is too high, issue a warning  
-  if (co2 >= CO2_THRESHOLD) {
+  if (co2 >= CO2_CRITICAL) {
     digitalWrite(WARNING_DIODE_PIN, HIGH);
-  } else if (co2 < CO2_THRESHOLD) {
+  } else {
     digitalWrite(WARNING_DIODE_PIN, LOW);
   }
 
-  // wait 2 seconds: SCD30 has new data every 2 seconds
-  delay(2000);
+  // SCD30 has new data every 2 seconds
+  delay(MEASURE_INTERVAL*1000);
 }
 
 void printToSerial( float co2, float temperature, float humidity) {
