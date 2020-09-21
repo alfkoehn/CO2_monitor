@@ -1,27 +1,50 @@
 /*
- A CO2 monitor displaying CO2 concentration on an OLED screen
- and to the serial monitor using SparkFun libraries.
- If the CO2 concentration is too high, a red LED is fired-up.
+  
+  A CO2 monitor displaying CO2 concentration on an OLED screen
+  and to the serial monitor using SparkFun libraries.
+  If the CO2 concentration is too high, a red LED is fired-up.
 
- In addition, the relative humidity in % and temperature in C is 
- also measured and displayed.
+  In addition, the relative humidity in % and temperature in C is 
+  also measured and displayed.
  
- Author:  Alf Köhn-Seemann
- Email:   alf.koehn@gmail.com
- License: MIT
+  Author:  Alf Köhn-Seemann
+  Email:   alf.koehn@gmail.com
+  License: MIT
 
- All required libraries are available via the library manager.
+  The following libraries need to installed manually:
+    https://github.com/me-no-dev/ESPAsyncTCP
+      click on "Code", select "Download ZIP"
+    open Arduino IDE
+      Sketch --> Include Libary --> Add .ZIP Library
+      If previously already installed remove by deleting the corresponding folder in ~/Arduino/libraries/
 
- Hardware Connections:
- Attach NodeMCU to computer using a USB cable.
- Connect OLED display, SCD30, red LED to NodeMCU.
- Optional: Open Serial Monitor at 115200 baud.
+    https://github.com/me-no-dev/ESPAsyncWebServer
+      same as above
+
+  All other libraries are available via the library manager.
+
+  Hardware Connections:
+  Attach NodeMCU to computer using a USB cable.
+  Connect OLED display, SCD30, red LED to NodeMCU.
+  Optional: Open Serial Monitor at 115200 baud.
+
 */
 
+// Import required libraries
+#include <ESP8266WiFi.h>
+#include <Hash.h>                 // for SHA1 algorith (for Font Awesome)
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <Wire.h>                 // for I2C communication
 #include <Adafruit_GFX.h>         // for writing to display
 #include <Adafruit_SSD1306.h>     // for writing to display
 #include "SparkFun_SCD30_Arduino_Library.h"
+
+#include "Webpageindex.h"         // webpage content, same folder as .ino file
+
+// Replace with your network credentials
+const char* ssid      = "WIFI_SSID";
+const char* password  = "WIFI_PASSWORD";
 
 // activate debugging
 //   true:  print info + data to serial monitor
@@ -31,7 +54,7 @@
 #define CO2_CRITICAL 1500         // threshold for warning
 #define WARNING_DIODE_PIN D8      // NodeMCU pin for red LED
 
-#define MEASURE_INTERVAL 2        // seconds, minimum: 2 
+#define MEASURE_INTERVAL 10       // seconds, minimum: 2 
 
 #define SCREEN_WIDTH 128          // OLED display width in pixels
 #define SCREEN_HEIGHT 32          // OLED display height in pixels
@@ -44,91 +67,39 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 SCD30 airSensor;
 
+// current temperature & humidity, updated in loop()
+float temperature_web = 0.0;
+float humidity_web    = 0.0;
+float co2_web         = 0.0;
 
-void setup() {
-  if (DEBUG == true) {
-    // initialize serial monitor at baud rate of 115200
-    Serial.begin(115200);
-    Serial.println("Using SCD30 to get: CO2 concentration, temperature, humidity");
+// Create AsyncWebServer object on port 80
+AsyncWebServer server(80);
+
+// use "unsigned long" for variables that hold time
+//  --> value will quickly become too large for an int
+unsigned long previousMilliseconds = 0;    // will store last time scd30 was updated
+
+// update scd30 readings every MEASURE_INTERVAL seconds
+const long interval = MEASURE_INTERVAL*1000;  
+
+// read html into string
+String webpage = index_html;
+
+// Replaces placeholder with DHT values
+String processor(const String& var){
+  //Serial.println(var);
+  if(var == "CO2"){
+    return String(co2_web);
   }
- 
-  Wire.begin();
-
-  // initialize LED pin as an output
-  pinMode(WARNING_DIODE_PIN, OUTPUT);
-
-  // SSD1306_SWITCHCAPVCC: generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
-    if (DEBUG == true) 
-      Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
+  else if(var == "TEMPERATURE"){
+    return String(temperature_web);
   }
-
-  // Show initial display buffer contents on the screen --
-  // the library initializes this with an Adafruit splash screen.
-  display.display();              // initialize display
-                                  // library will show Adafruit logo
-  delay(2000);                    // pause for 2 seconds
-  display.clearDisplay();         // clear the buffer
-  display.setTextSize(1);         // has to be set initially
-  display.setTextColor(WHITE);    // has to be set initially
-
-  // move cursor to position and print text there
-  display.setCursor(2,5);
-  display.println("SCD30 test program");
-  display.println("twitter.com/formbar");
-
-  display.display();              // write display buffer to display
-
-  // turn warning LED on and off to test it
-  digitalWrite(WARNING_DIODE_PIN, HIGH);
-  delay(2000); 
-  digitalWrite(WARNING_DIODE_PIN, LOW);
-
-  // initialize SCD30
-  // SCD30 has data ready every two seconds
-  if (airSensor.begin() == false) {
-    if (DEBUG == true)
-      Serial.println("Air sensor not detected. Please check wiring. Freezing...");
-    while (1)
-      ;
+  else if(var == "HUMIDITY"){
+    return String(humidity_web);
   }
+  return String();
 }
 
-void loop() {
-
-  float 
-    co2,
-    temperature,
-    humidity;
-  
-  if (airSensor.dataAvailable()) {
-    // get data from SCD30 sensor
-    co2         = airSensor.getCO2();
-    temperature = airSensor.getTemperature();
-    humidity    = airSensor.getHumidity();
-
-    // print data to serial console
-    if (DEBUG == true)
-      printToSerial(co2, temperature, humidity);
-
-    // print data to OLED display
-    printToOLED(co2, temperature, humidity);
-  }
-  else
-    if (DEBUG == true)
-      Serial.println("Waiting for new data");
-
-  // if CO2-value is too high, issue a warning  
-  if (co2 >= CO2_CRITICAL) {
-    digitalWrite(WARNING_DIODE_PIN, HIGH);
-  } else {
-    digitalWrite(WARNING_DIODE_PIN, LOW);
-  }
-
-  // SCD30 has new data every 2 seconds
-  delay(MEASURE_INTERVAL*1000);
-}
 
 void printToSerial( float co2, float temperature, float humidity) {
   Serial.print("co2(ppm):");
@@ -167,4 +138,128 @@ void printToOLED( float co2, float temperature, float humidity) {
   display.print(humidity, 1);
     
   display.display();
+}
+
+
+void setup(){
+  if (DEBUG == true) {
+    // initialize serial monitor at baud rate of 115200
+    Serial.begin(115200);
+    Serial.println("Using SCD30 to get: CO2 concentration, temperature, humidity");
+  }
+
+  // initialize I2C
+  Wire.begin();
+
+  // initialize LED pin as an output
+  pinMode(WARNING_DIODE_PIN, OUTPUT);
+
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  if (DEBUG == true)
+    Serial.println("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    if (DEBUG == true)
+      Serial.print(".");
+  }
+  if (DEBUG == true)
+    Serial.println(WiFi.localIP());
+
+    // SSD1306_SWITCHCAPVCC: generate display voltage from 3.3V internally
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
+    if (DEBUG == true) 
+      Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+
+  // Show initial display buffer contents on the screen --
+  // the library initializes this with an Adafruit splash screen.
+  display.display();              // initialize display
+                                  // library will show Adafruit logo
+  delay(2000);                    // pause for 2 seconds
+  display.clearDisplay();         // clear the buffer
+  display.setTextSize(1);         // has to be set initially
+  display.setTextColor(WHITE);    // has to be set initially
+
+  // move cursor to position and print text there
+  display.setCursor(2,5);
+  display.println("CO2 monitor");
+  display.println("twitter.com/formbar");
+
+  display.display();              // write display buffer to display
+
+  // turn warning LED on and off to test it
+  digitalWrite(WARNING_DIODE_PIN, HIGH);
+  delay(2000); 
+  digitalWrite(WARNING_DIODE_PIN, LOW);
+
+  // initialize SCD30
+  // SCD30 has data ready every two seconds
+  if (airSensor.begin() == false) {
+    if (DEBUG == true)
+      Serial.println("Air sensor not detected. Please check wiring. Freezing...");
+    while (1)
+      ;
+  }
+
+  // Route for root / web page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", index_html, processor);
+  });
+  server.on("/co2", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/plain", String(co2_web).c_str());
+  });
+  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/plain", String(temperature_web).c_str());
+  });
+  server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/plain", String(humidity_web).c_str());
+  });
+
+  // Start server
+  server.begin();
+}
+ 
+void loop(){
+
+  float
+    co2_new,
+    temperature_new,
+    humidity_new;
+  
+  unsigned long currentMilliseconds;
+
+  // get milliseconds passed since program started to run
+  currentMilliseconds = millis();
+  
+  if (currentMilliseconds - previousMilliseconds >= interval) {
+    // save the last time you updated the DHT values
+    previousMilliseconds = currentMilliseconds;
+
+    if (airSensor.dataAvailable()) {
+      // get data from SCD30 sensor
+      co2_new         = airSensor.getCO2();
+      temperature_new = airSensor.getTemperature();
+      humidity_new    = airSensor.getHumidity();
+
+      // print data to serial console
+      if (DEBUG == true)
+        printToSerial(co2_new, temperature_new, humidity_new);
+
+      // print data to OLED display
+      printToOLED(co2_new, temperature_new, humidity_new);
+
+      co2_web         = co2_new;
+      temperature_web = temperature_new;
+      humidity_web    = humidity_new;
+    }
+
+// if CO2-value is too high, issue a warning  
+  if (co2_web >= CO2_CRITICAL) {
+    digitalWrite(WARNING_DIODE_PIN, HIGH);
+  } else {
+    digitalWrite(WARNING_DIODE_PIN, LOW);
+  }
+  }
 }
