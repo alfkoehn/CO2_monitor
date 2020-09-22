@@ -31,20 +31,25 @@
 */
 
 // Import required libraries
-#include <ESP8266WiFi.h>
-#include <Hash.h>                 // for SHA1 algorith (for Font Awesome)
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
 #include <Wire.h>                 // for I2C communication
 #include <Adafruit_GFX.h>         // for writing to display
 #include <Adafruit_SSD1306.h>     // for writing to display
 #include "SparkFun_SCD30_Arduino_Library.h"
 
-#include "Webpageindex.h"         // webpage content, same folder as .ino file
+// set to true if WiFi is desired, otherwise corresponding code is not compiled
+#define WIFI_ENABLED true
 
-// Replace with your network credentials
-const char* ssid      = "WIFI_SSID";
-const char* password  = "WIFI_PASSWORD";
+#if WIFI_ENABLED
+  #include <ESP8266WiFi.h>
+  #include <Hash.h>               // for SHA1 algorith (for Font Awesome)
+  #include <ESPAsyncTCP.h>
+  #include <ESPAsyncWebServer.h>
+  #include "Webpageindex.h"       // webpage content, same folder as .ino file
+
+  // Replace with your network credentials
+  const char* ssid      = "ENTER_SSID";
+  const char* password  = "ENTER_PASSWORD";
+#endif
 
 // activate debugging
 //   true:  print info + data to serial monitor
@@ -66,39 +71,40 @@ const char* password  = "WIFI_PASSWORD";
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 SCD30 airSensor;
-
-// current temperature & humidity, updated in loop()
-float temperature_web = 0.0;
-float humidity_web    = 0.0;
-float co2_web         = 0.0;
-
-// Create AsyncWebServer object on port 80
-AsyncWebServer server(80);
-
 // use "unsigned long" for variables that hold time
 //  --> value will quickly become too large for an int
-unsigned long previousMilliseconds = 0;    // will store last time scd30 was updated
+unsigned long previousMilliseconds = 0;    // store last time scd30 was updated
 
 // update scd30 readings every MEASURE_INTERVAL seconds
 const long interval = MEASURE_INTERVAL*1000;  
 
-// read html into string
-String webpage = index_html;
+#if WIFI_ENABLED
+  // temperature, humidity, CO2 for web-page, updated in loop()
+  float temperature_web = 0.0;
+  float humidity_web    = 0.0;
+  float co2_web         = 0.0;
 
-// Replaces placeholder with DHT values
-String processor(const String& var){
-  //Serial.println(var);
-  if(var == "CO2"){
-    return String(co2_web);
+  // create AsyncWebServer object on port 80
+  AsyncWebServer server(80);
+
+  // read html into string
+  String webpage = index_html;
+
+  // function for replacing placeholder on webpage with SCD30 values
+  String processor(const String& var){
+    //Serial.println(var);
+    if(var == "CO2"){
+      return String(co2_web);
+    }
+    else if(var == "TEMPERATURE"){
+      return String(temperature_web);
+    }
+    else if(var == "HUMIDITY"){
+      return String(humidity_web);
+    }
+    return String();
   }
-  else if(var == "TEMPERATURE"){
-    return String(temperature_web);
-  }
-  else if(var == "HUMIDITY"){
-    return String(humidity_web);
-  }
-  return String();
-}
+#endif
 
 
 void printToSerial( float co2, float temperature, float humidity) {
@@ -110,6 +116,7 @@ void printToSerial( float co2, float temperature, float humidity) {
   Serial.print(humidity, 1);
   Serial.println();
 }
+
 
 void printToOLED( float co2, float temperature, float humidity) {
   int
@@ -154,6 +161,7 @@ void setup(){
   // initialize LED pin as an output
   pinMode(WARNING_DIODE_PIN, OUTPUT);
 
+#if WIFI_ENABLED
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   if (DEBUG == true)
@@ -165,16 +173,15 @@ void setup(){
   }
   if (DEBUG == true)
     Serial.println(WiFi.localIP());
+#endif
 
-    // SSD1306_SWITCHCAPVCC: generate display voltage from 3.3V internally
+  // SSD1306_SWITCHCAPVCC: generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
     if (DEBUG == true) 
       Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
+    for(;;);                      // don't proceed, loop forever
   }
 
-  // Show initial display buffer contents on the screen --
-  // the library initializes this with an Adafruit splash screen.
   display.display();              // initialize display
                                   // library will show Adafruit logo
   delay(2000);                    // pause for 2 seconds
@@ -186,6 +193,11 @@ void setup(){
   display.setCursor(2,5);
   display.println("CO2 monitor");
   display.println("twitter.com/formbar");
+#if WIFI_ENABLED
+  display.println(WiFi.localIP());
+#else
+  display.println("WiFi disabled");
+#endif
 
   display.display();              // write display buffer to display
 
@@ -203,6 +215,7 @@ void setup(){
       ;
   }
 
+#if WIFI_ENABLED
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html, processor);
@@ -216,9 +229,9 @@ void setup(){
   server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", String(humidity_web).c_str());
   });
-
   // Start server
   server.begin();
+#endif
 }
  
 void loop(){
@@ -250,16 +263,19 @@ void loop(){
       // print data to OLED display
       printToOLED(co2_new, temperature_new, humidity_new);
 
+#if WIFI_ENABLED
+      // updated values for webpage
       co2_web         = co2_new;
       temperature_web = temperature_new;
       humidity_web    = humidity_new;
+#endif
     }
 
-// if CO2-value is too high, issue a warning  
-  if (co2_web >= CO2_CRITICAL) {
-    digitalWrite(WARNING_DIODE_PIN, HIGH);
-  } else {
-    digitalWrite(WARNING_DIODE_PIN, LOW);
-  }
+    // if CO2-value is too high, issue a warning  
+    if (co2_new >= CO2_CRITICAL) {
+      digitalWrite(WARNING_DIODE_PIN, HIGH);
+    } else {
+      digitalWrite(WARNING_DIODE_PIN, LOW);
+    }
   }
 }
