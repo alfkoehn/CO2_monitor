@@ -93,19 +93,9 @@
 
 \title{A CO$_2$ monitor as an introductory microelectronics project helping to slow-down the spread of the corona virus and ensuring a healthy learning and working environment}
 
-\author{A.~K\"{o}hn-Seemann, \href{mailto:alf.koehn@gmail.com}{alf.koehn@gmail.com}%$^{1}$%, %
-		%B.E.~Eliasson$^{2}$, %
-		%L.~Holland$^{3}$, %
-		%R.G.L.~Vann$^{3}$%
-		%D.~Woodward$^{2}$%
-		}
+\author{A.~K\"{o}hn-Seemann, \href{mailto:alf.koehn@gmail.com}{alf.koehn@gmail.com}}
 		
 \date{\myisodate}
-
-%\address{$^1$Institut f\"{u}r Grenzfl\"{a}chenverfahrenstechnik und Plasmatechnologie, Universit\"{a}t Stuttgart, 70569 Stuttgart, Germany}
-%\address{$^2$Department of Physics, SUPA, University of Strathclyde, Glasgow, Scotland, G4 ONG, United Kingdom}
-%\address{$^3$York Plasma Institute, Department of Physics, University of York, York YO10 5DD, United Kingdom}
-%\ead{alf.koehn@gmail.com}
 
 \maketitle
 
@@ -119,8 +109,6 @@ This paper describes the setup of a simple yet reliable \coo monitor which is ba
 
 %\pacs{52.25.Xz, 52.35.Hr, 52.35.Mw, 52.50.Sw, 52.55.Hc, 52.70.Ds, 52.70.Gw, 52.70.Kz}
 % 47.11.Bc for finite difference methods
-% Uncomment for Submitted to journal title message
-%\submitto{\NJP}
 % Comment out if separate title page not required
 %\maketitle
 
@@ -252,8 +240,6 @@ The NodeMCU then needs to be connected to the OLED display as follows:\\
 It is of course also possible to directly connect the respective \texttt{SDA} and \texttt{SCL} pins of the OLED and the SCD30, as shown in Fig.~\ref{f:CO2_fritzing}, instead of connecting those pins between the SCD30 and the NodeMCU. The red LED is connected with its anode, the longer leg, to pin \texttt{D8/GPIO15} of the NodeMCU and with its cathode, the shorter leg, via a $220\,\mathrm{Omega}$ resistor (to limit the current) to ground.  
 
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -275,7 +261,6 @@ To display the values measured by the SCD30 sensor on a website, we use global v
 The code for the webpage is shown in Listing~\ref{lst:website_html}.
 \lstinputlisting[caption={Code for the webpage.}, label={lst:website_html}, language=html]%
 {code/Webpageindex.h}
-
 
 Listing~\ref{lst:setup} shows the \texttt{setup} function of the code, where the serial monitor is initialized, followed by the diode, optionally the WiFi, the OLED display, and then the SCD30. Finally, the webserver and the functions required to update the data on the webpage is prepared.
 \lstinputlisting[firstline=151, lastline=235, caption={Setup code.}, label={lst:setup}]%
