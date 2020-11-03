@@ -56,7 +56,10 @@
 //   false: serial monitor is not used
 #define DEBUG true
 
-#define CO2_CRITICAL 1500         // threshold for warning
+#define CO2_THRESHOLD1 600
+#define CO2_THRESHOLD2 1000
+#define CO2_THRESHOLD3 1500
+
 #define WARNING_DIODE_PIN D8      // NodeMCU pin for red LED
 
 #define MEASURE_INTERVAL 10       // seconds, minimum: 2 
@@ -84,7 +87,7 @@ const long interval = MEASURE_INTERVAL*1000;
   float humidity_web    = 0.0;
   float co2_web         = 0.0;
 
-  // create AsyncWebServer object on port 80
+  // create AsyncWebServer object on port 80 (port 80 for http)
   AsyncWebServer server(80);
 
   // read html into string
@@ -122,8 +125,8 @@ void printToOLED( float co2, float temperature, float humidity) {
   int
     x0, x1;           // to align output on OLED display vertically
 
-  x0  = 2;
-  x1  = 86;
+  x0  = 0;
+  x1  = 84;
 
   display.clearDisplay();
   display.setCursor(x0,5);
@@ -144,6 +147,143 @@ void printToOLED( float co2, float temperature, float humidity) {
   display.setCursor(x1,25);
   display.print(humidity, 1);
     
+  display.display();
+}
+
+
+void printEmoji( float value ) {
+  // write previously defined emojis to display
+  // display.drawBitmap(x, y, bitmap data, bitmap width, bitmap height, color)
+  // display.drawCircle(x, y, radius, color) 
+
+  float start_angle,    // used for smiley mouth
+        end_angle,      // used for smiley mouth
+        i;              // used for smiley mouth
+  int   smile_x0,       
+        smile_y0,
+        smile_r,
+        emoji_r,
+        emoji_x0,
+        emoji_y0,
+        eye_size;
+
+  emoji_r   = SCREEN_HEIGHT/4;
+  if (SCREEN_HEIGHT == 32) {
+    emoji_x0  = SCREEN_WIDTH - (1*emoji_r+1);
+    emoji_y0  = emoji_r*3-1;
+    eye_size  = 1;
+  } else if (SCREEN_HEIGHT == 64) {
+    emoji_x0  = emoji_r;
+    emoji_y0  = emoji_r*3-1;
+    eye_size  = 2;
+  }
+
+  bool  plot_all;
+
+  plot_all  = false;
+  if (int(value) == 0) {
+    plot_all  = true;
+  }
+
+  if (value < CO2_THRESHOLD1){
+    // very happy smiley face
+
+    display.drawCircle(emoji_x0*1, emoji_y0, emoji_r, WHITE);
+
+    start_angle = 20./180*PI; 
+    end_angle   = 160./180*PI;
+    smile_r   = emoji_r/2;
+    smile_x0  = emoji_x0*1;
+    smile_y0  = emoji_y0+emoji_r/6;
+    for (i = start_angle; i < end_angle; i = i + 0.05) {
+      display.drawPixel(smile_x0 + cos(i) * smile_r, smile_y0 + sin(i) * smile_r, WHITE);
+    }
+
+    display.drawLine(smile_x0+cos(start_angle)*smile_r, smile_y0+sin(start_angle)*smile_r,
+                     smile_x0+cos(end_angle)*smile_r, smile_y0+sin(end_angle)*smile_r,
+                     WHITE);
+    
+    // draw eyes
+    display.fillCircle(emoji_x0*1-emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+    display.fillCircle(emoji_x0*1+emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+  }
+  if ((value >= CO2_THRESHOLD1 && value < CO2_THRESHOLD2) || (plot_all == true)) {
+    // happy smiley face
+
+    if (SCREEN_HEIGHT == 32) {
+      display.drawCircle(emoji_x0, emoji_y0, emoji_r, WHITE);
+    } else if (SCREEN_HEIGHT == 64) {
+      display.drawCircle(emoji_x0 + 2*emoji_r, emoji_y0, emoji_r, WHITE);
+    }
+
+    // draw mouth
+    if (SCREEN_HEIGHT == 32) {
+      smile_x0  = emoji_x0;
+    } else if (SCREEN_HEIGHT == 64) {
+      smile_x0  = emoji_x0 + 2*emoji_r;
+    }
+    start_angle = 20./180*PI; 
+    end_angle   = 160./180*PI;
+    smile_r   = emoji_r/2;
+    smile_y0  = emoji_y0+emoji_r/6;
+    for (i = start_angle; i < end_angle; i = i + 0.05) {
+      display.drawPixel(smile_x0 + cos(i) * smile_r, smile_y0 + sin(i) * smile_r, WHITE);
+    }
+
+    // draw eyes
+    display.fillCircle(smile_x0-emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+    display.fillCircle(smile_x0+emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+  }
+  if ((value >= CO2_THRESHOLD2 && value < CO2_THRESHOLD3) || (plot_all == true)) {
+    // not so happy smiley face
+
+    if (SCREEN_HEIGHT == 32) {
+      display.drawCircle(emoji_x0, emoji_y0, emoji_r, WHITE);
+    } else if (SCREEN_HEIGHT == 64) {
+      display.drawCircle(emoji_x0 + 4*emoji_r, emoji_y0, emoji_r, WHITE);
+    }
+
+    // draw mouth
+    if (SCREEN_HEIGHT == 32) {
+      smile_x0  = emoji_x0;
+    } else if (SCREEN_HEIGHT == 64) {
+      smile_x0  = emoji_x0 + 4*emoji_r;
+    }
+    display.drawLine(smile_x0-emoji_r/2/4*3, emoji_y0+emoji_r/2,
+                     smile_x0+emoji_r/2/4*3, emoji_y0+emoji_r/2,
+                     WHITE);
+
+    // draw eyes
+    display.fillCircle(smile_x0-emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+    display.fillCircle(smile_x0+emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+  }
+  if ((value >= CO2_THRESHOLD3) || (plot_all == true)) {
+    // sad smiley face
+
+    if (SCREEN_HEIGHT == 32) {
+      display.drawCircle(emoji_x0, emoji_y0, emoji_r, WHITE);
+    } else if (SCREEN_HEIGHT == 64) {
+      display.drawCircle(emoji_x0 + 6*emoji_r-1, emoji_y0, emoji_r, WHITE);
+    }
+
+    // draw mouth
+    if (SCREEN_HEIGHT == 32) {
+      smile_x0  = emoji_x0;
+    } else if (SCREEN_HEIGHT == 64) {
+      smile_x0  = emoji_x0 + 6*emoji_r;
+    }
+    start_angle = 200./180*PI; 
+    end_angle   = 340./180*PI;
+    smile_r   = emoji_r/2;
+    smile_y0  = emoji_y0+emoji_r/6;
+    for (i = start_angle; i < end_angle; i = i + 0.05) {
+      display.drawPixel(smile_x0 + cos(i) * smile_r, smile_y0+emoji_r/2 + sin(i) * smile_r, WHITE);
+    }
+
+    // draw eyes
+    display.fillCircle(smile_x0-emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+    display.fillCircle(smile_x0+emoji_r/2/4*3, smile_y0-emoji_r/3, eye_size, WHITE);
+  }
   display.display();
 }
 
@@ -199,11 +339,25 @@ void setup(){
   display.println("WiFi disabled");
 #endif
 
+  // write previously defined emojis to display
+  if (SCREEN_HEIGHT == 32) {
+    printEmoji(400);
+    delay(2000);
+    printEmoji(600);
+    delay(2000);
+    printEmoji(1200);
+    delay(2000);
+    printEmoji(1800);
+    delay(2000);
+  } else {
+    printEmoji(0);
+  }
+  
   display.display();              // write display buffer to display
 
   // turn warning LED on and off to test it
   digitalWrite(WARNING_DIODE_PIN, HIGH);
-  delay(2000); 
+  delay(2000*2); 
   digitalWrite(WARNING_DIODE_PIN, LOW);
 
   // initialize SCD30
@@ -272,10 +426,13 @@ void loop(){
     }
 
     // if CO2-value is too high, issue a warning  
-    if (co2_new >= CO2_CRITICAL) {
+    if (co2_new >= CO2_THRESHOLD3) {
       digitalWrite(WARNING_DIODE_PIN, HIGH);
     } else {
       digitalWrite(WARNING_DIODE_PIN, LOW);
     }
+
+    // print smiley with happiness according to CO2 concentration
+    printEmoji( co2_new);
   }
 }
