@@ -61,7 +61,7 @@
 
 \lstdefinestyle{myArduinoStyle}{
     backgroundcolor=\color{mycodebackcolour},	% choose background color
-    basicstyle=\ttfamily\scriptsize,       	% font and size of fonts are used for the code
+    basicstyle=\ttfamily\scriptsize,       	% font & font size: small > footnotesize > scriptsize > tiny
     commentstyle=\color{mycodegreen}\textit,	% comment style
     keywordstyle=\color{magenta}\bfseries,	% keyword style
     numberstyle=\tiny\color{mycodegray},		% style for line numbers
@@ -249,30 +249,42 @@ It is of course also possible to directly connect the respective \texttt{SDA} an
 Arduino is used as programming language in this project due to its widespread usage and large numbers of libraries available for various hardware components. The Arduino IDE library manager allows to directly install a proper Arduino library for the SCD30. Alternatively, the library is available as a GitHub repository~\cite{SPARKFUN2020}. For a tutorial on how to install libraries within the Arduino IDE, see Ref.~\cite{SPARKFUN2020A}.
 As for the NodeMCU and the OLED display, the Arduino IDE library manager is able to provide the required libraries.
 
-The source code for the \coo monitor as described in this paper is available on GitHub~\cite{KOEHN2020}, in order to be able to update and extend it. Nevertheless, we have also included the code in this paper, to provide a complete description of the project. The include statements of the code are listed in Listing \ref{lst:include}. The \texttt{Adafruit\_GFX.h} and \texttt{Adafruit\_SSD1306.h} libraries are used for the OLED display and are required to be installed via the library manager of the Arduino IDE beforehand (alternatively, they are also available on GitHub~\cite{ADAFRUIT2020A} for manual installation). Note that the display size in pixels needs to be set correctly and can vary. The \texttt{SparkFun\_SCD30\_Arduino\_Library.h} also needs to be installed via the library manager (or manually from the GitHub repository~\cite{SPARKFUN2020}).
+The source code for the \coo monitor as described in this paper is available on GitHub~\cite{KOEHN2020}, in order to be able to update and extend it. Nevertheless, we have also included the code in this paper, to provide a complete description of the project. The \texttt{include} statements and some configurations of the program are listed in Listing \ref{lst:include}. The \texttt{Adafruit\_GFX.h} and \texttt{Adafruit\_SSD1306.h} libraries are used for the OLED display and are required to be installed via the library manager of the Arduino IDE beforehand (alternatively, they are also available on GitHub~\cite{ADAFRUIT2020A} for manual installation). Note that the display size in pixels needs to be set correctly and can vary. The \texttt{SparkFun\_SCD30\_Arduino\_Library.h} also needs to be installed via the library manager (or manually from the GitHub repository~\cite{SPARKFUN2020}).
 
-\lstinputlisting[firstline=34, lastline=79, caption={Loading the required libraries.}, label={lst:include}]%
+\lstinputlisting[firstline=34, lastline=100, caption={Load required libraries and set some configurations.}, label={lst:include}]%
 {code/CO2_monitor.ino} 
 A switch is included in the header of the code allowing to enable or disable WiFi capabilities (by setting the variable \texttt{WIFI\_ENABLED} respectively to \texttt{true} or \texttt{false}). The libraries required for using WiFi are only included if the corresponding switch is set to \texttt{true}. In this example, we decided to use the \texttt{ESPAsyncWebServer}~\cite{MENODEV2020B}, based on \texttt{ESPAsyncTCP}~\cite{MENODEV2020A}, for a webserver supposed to run on the ESP8266 because asynchronous networks, as provided by these two libraries, allow us to handle more than just one connection at a time (which is important if used in a classroom environment). During the time of writing this article, these libraries require manual installation, i.e.\ getting a \texttt{zip} file from the GitHub repositories and include those zip files manually as libraries in the Arduino IDE.
 
 To display the values measured by the SCD30 sensor on a website, we use global variables in the code, as shown in Listing~\ref{lst:prepare_website}. The complete html code for the website is loaded via including it in as a library and then copying into a string variable, called \texttt{webpage}.
-\lstinputlisting[firstline=81, lastline=107, caption={Prepare website.}, label={lst:prepare_website}]%
+\lstinputlisting[firstline=102, lastline=128, caption={Prepare website.}, label={lst:prepare_website}]%
 {code/CO2_monitor.ino}
 
 The code for the webpage is shown in Listing~\ref{lst:website_html}.
 \lstinputlisting[caption={Code for the webpage.}, label={lst:website_html}, language=html]%
 {code/Webpageindex.h}
 
+The function to print the data obtained from the SCD30 to the serial console is shown in Listing~\ref{lst:printSerial}, the function to print the data to the OLED display is given in Listing~\ref{lst:printOLED}.
+\lstinputlisting[firstline=131, lastline=139, caption={Function which prints data to the serial console.},label={lst:printSerial}]%
+{code/CO2_monitor.ino} 
+\lstinputlisting[firstline=142, lastline=169, caption={Function which prints data to the OLED display.}, label={lst:printOLED}]%
+{code/CO2_monitor.ino} 
+
+Depending on the the \coo concentration, the OLED display shows an emoji with the level of happiness being correlated to the \coo concentration. The corresponding function to draw that face is given in Listing~\ref{lst:printOLED}.
+\lstinputlisting[firstline=172, lastline=306, caption={Function which prints smilies to the OLED display depending on the \coo concentration.}, label={lst:printOLED}]%
+{code/CO2_monitor.ino} 
+
 Listing~\ref{lst:setup} shows the \texttt{setup} function of the code, where the serial monitor is initialized, followed by the diode, optionally the WiFi, the OLED display, and then the SCD30. Finally, the webserver and the functions required to update the data on the webpage are prepared.
-\lstinputlisting[firstline=151, lastline=235, caption={Setup code.}, label={lst:setup}]%
+\lstinputlisting[firstline=388, lastline=480, caption={Setup code.}, label={lst:setup}]%
+{code/CO2_monitor.ino}
+
+The calibration and setup of the SCD30 is put into a separate function, shown in Listing~\ref{lst:setup}. An additional function, given in Listing~\ref{lst:SCD30_FRC}, performs a forced recalibration of the SCD30.
+\lstinputlisting[firstline=350, lastline=385, caption={Setup code for the SCD30.}, label={lst:setup}]%
+{code/CO2_monitor.ino}
+\lstinputlisting[firstline=309, lastline=347, caption={Function to perform a forced recalibration of the SCD30.}, label={lst:SCD30_FRC}]%
 {code/CO2_monitor.ino}
 
 The main code, the \texttt{loop} function, is given in Listing~\ref{lst:main}. First, the data is obtained from the SCD30 sensor and then passed to a function outputting it to the serial monitor and then to another function, printing it on the OLED display. Listings~\ref{lst:printSerial} and \ref{lst:printOLED} show the code for the two latter functions. The data is then copied into the corresponding global variables to prepare the next update for the webpage. Finally, it is checked if the \coo concentration is above a critical threshold: a red LED indicates too high a value in our example (one could also think of an acoustic signal and some visual change on the webpage).
-\lstinputlisting[firstline=237, lastline=281, caption={Main loop which is executed repeatedly.}, label={lst:main}]%
-{code/CO2_monitor.ino} 
-\lstinputlisting[firstline=110, lastline=118, caption={Function which prints data to the serial console.},label={lst:printSerial}]%
-{code/CO2_monitor.ino} 
-\lstinputlisting[firstline=121, lastline=148, caption={Function which prints data to the OLED display.}, label={lst:printOLED}]%
+\lstinputlisting[firstline=483, lastline=536, caption={Main loop which is executed repeatedly.}, label={lst:main}]%
 {code/CO2_monitor.ino} 
 
 
