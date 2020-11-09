@@ -30,7 +30,20 @@
 
 */
 
-// Import required libraries
+
+// -------------------------------------------------------------------
+// Some switches defining general behaviour of the program
+// -------------------------------------------------------------------
+#define WIFI_ENABLED false      // set to true if WiFi is desired, 
+                                // otherwise corresponding code is not compiled
+#define DEBUG true              // activate debugging
+                                // true:  print info + data to serial monitor
+                                // false: serial monitor is not used
+
+
+// -------------------------------------------------------------------
+// Import all required libraries
+// -------------------------------------------------------------------
 #include <Wire.h>                 // for I2C communication
 #include <Adafruit_GFX.h>         // for writing to display
 #include <Adafruit_SSD1306.h>     // for writing to display
@@ -67,9 +80,10 @@
 #define SCREEN_WIDTH 128          // OLED display width in pixels
 #define SCREEN_HEIGHT 32          // OLED display height in pixels
 
-// OLDE reset pin, 4 is default (-1 if sharing Arduino reset pin)
-// using NodeMCU, we have to use LED_BUILTIN
-#define OLED_RESET LED_BUILTIN
+#define OLED_RESET LED_BUILTIN    // OLED reset pin, 4 is default
+                                  // -1 if sharing Arduino reset pin
+                                  // using NodeMCU, it is LED_BUILTIN
+                                  
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -79,7 +93,11 @@ SCD30 airSensor;
 unsigned long previousMilliseconds = 0;    // store last time scd30 was updated
 
 // update scd30 readings every MEASURE_INTERVAL seconds
-const long interval = MEASURE_INTERVAL*1000;  
+const long interval = MEASURE_INTERVAL*1000;
+
+// switch to perform a forced recalibration
+// should only be done once in a while and only when outside 
+bool DO_FORCED_RECALIBRATION = false;
 
 #if WIFI_ENABLED
   // temperature, humidity, CO2 for web-page, updated in loop()
@@ -152,7 +170,7 @@ void printToOLED( float co2, float temperature, float humidity) {
 
 
 void printEmoji( float value ) {
-  // write previously defined emojis to display
+  // syntax for functions used to draw to OLED:
   // display.drawBitmap(x, y, bitmap data, bitmap width, bitmap height, color)
   // display.drawCircle(x, y, radius, color) 
 
@@ -288,6 +306,85 @@ void printEmoji( float value ) {
 }
 
 
+void forced_recalibration(){
+  // note: for best results, the sensor has to be run in a stable environment 
+  //       in continuous mode at a measurement rate of 2s for at least two 
+  //       minutes before applying the FRC command and sending the reference value
+  // quoted from "Interface Description Sensirion SCD30 Sensor Module"
+  
+  String counter;
+
+  int CO2_offset_calibration = 410;
+  
+  if (DEBUG == true){
+    Serial.println("Starting to do a forced recalibration in 10 seconds");
+  }
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.println("Warning:");
+  display.println("forced recalibration");
+  display.display();
+  
+  for (int ii=0; ii<10; ++ii){
+    counter = String(10-ii);
+    display.setCursor(ii*9,20);
+    display.print(counter);
+    display.display();
+    delay(1000);
+  }
+  
+  airSensor.setForcedRecalibrationFactor(CO2_offset_calibration);
+
+  delay(1000);
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.println("Successfully recalibrated!");
+  display.println("Only required ~once per year");
+  display.display();
+  delay(5000);
+  
+}
+
+
+void airSensorSetup(){
+
+  bool autoSelfCalibration = false;
+
+  // altitude of place of operation in meters
+  // Stuttgart: approx 300; Uni Stuttgart: approx 500
+  int alt = 300;
+
+  // Start sensor using the Wire port, but disable the auto-calibration
+  if (airSensor.begin(Wire, autoSelfCalibration) == false) {
+  //if (airSensor.begin() == false) {
+    if (DEBUG == true)
+      Serial.println("Air sensor not detected. Please check wiring. Freezing...");
+    while (1)
+      ;
+  }
+  
+  // SCD30 has data ready at maximum every two seconds
+  // can be set to 1800 at maximum (30 minutes)
+  //airSensor.setMeasurementInterval(2);
+
+  // altitude compensation in meters
+  // alternatively, one could also use:
+  //   airSensor.setAmbientPressure(pressure_in_mBar)
+  delay(1000);
+  airSensor.setAltitudeCompensation(alt);
+  
+  
+  float T_offset = airSensor.getTemperatureOffset();
+  Serial.print("Current temp offset: ");
+  Serial.print(T_offset, 2);
+  Serial.println("C");
+
+  // note that this value also depends on how you installed the SCD30
+  airSensor.setTemperatureOffset(7); //5 is used in example (0 is default value)
+}
+
+
 void setup(){
   if (DEBUG == true) {
     // initialize serial monitor at baud rate of 115200
@@ -361,13 +458,7 @@ void setup(){
   digitalWrite(WARNING_DIODE_PIN, LOW);
 
   // initialize SCD30
-  // SCD30 has data ready every two seconds
-  if (airSensor.begin() == false) {
-    if (DEBUG == true)
-      Serial.println("Air sensor not detected. Please check wiring. Freezing...");
-    while (1)
-      ;
-  }
+  airSensorSetup();
 
 #if WIFI_ENABLED
   // Route for root / web page
@@ -387,7 +478,8 @@ void setup(){
   server.begin();
 #endif
 }
- 
+
+
 void loop(){
 
   float
@@ -399,6 +491,12 @@ void loop(){
 
   // get milliseconds passed since program started to run
   currentMilliseconds = millis();
+
+  // forced recalibration requires 2 minutes of stable environment in advance
+  if ((DO_FORCED_RECALIBRATION == true) && (currentMilliseconds > 120000)) {
+    forced_recalibration();
+    DO_FORCED_RECALIBRATION = false;
+  }
   
   if (currentMilliseconds - previousMilliseconds >= interval) {
     // save the last time you updated the DHT values
