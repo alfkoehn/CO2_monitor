@@ -157,7 +157,7 @@ void printToOLED( float co2, float temperature, float humidity) {
   display.print("temp. ( C)");
   display.setCursor(x0+7*6,15);
   display.cp437(true);  // enable full 256 char 'Code Page 437' font
-  display.write(248);
+  display.write(248);   // degree symbol
   display.setCursor(x1,15);
   display.print(temperature, 1);
     
@@ -197,7 +197,7 @@ void printEmoji( float value ) {
     eye_size  = 2;
   }
 
-  bool  plot_all;
+  bool  plot_all;       // if set, plots all emojis (makes only sense for larger oled)
 
   plot_all  = false;
   if (int(value) == 0) {
