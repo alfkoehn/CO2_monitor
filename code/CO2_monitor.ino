@@ -400,8 +400,11 @@ void setup(){
   pinMode(WARNING_DIODE_PIN, OUTPUT);
 
 #if WIFI_ENABLED
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
+  /* Explicitly set ESP8266 to be a WiFi-client, otherwise, it would, by
+     default, try to act as both, client and access-point, and could cause
+     network-issues with other WiFi-devices on your WiFi-network. */
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);     // connect to Wi-Fi
   if (DEBUG == true)
     Serial.println("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
