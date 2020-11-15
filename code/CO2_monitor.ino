@@ -108,9 +108,6 @@ bool DO_FORCED_RECALIBRATION = false;
   // create AsyncWebServer object on port 80 (port 80 for http)
   AsyncWebServer server(80);
 
-  // read html into string
-  String webpage = index_html;
-
   // function for replacing placeholder on webpage with SCD30 values
   String processor(const String& var){
     //Serial.println(var);
