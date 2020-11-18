@@ -1,8 +1,9 @@
 /*
   
-  A CO2 monitor displaying CO2 concentration on an OLED screen
+  A CO2 monitor displaying CO2 concentration on an OLED or LCD screen
   and to the serial monitor using SparkFun libraries.
-  If the CO2 concentration is too high, a red LED is fired-up.
+  If the CO2 concentration is too high, a warning will be displayed:
+  depending on your set-up, this might be a red LED or something on the screen.
 
   In addition, the relative humidity in % and temperature in C is 
   also measured and displayed.
@@ -25,7 +26,7 @@
 
   Hardware Connections:
   Attach NodeMCU to computer using a USB cable.
-  Connect OLED display, SCD30, red LED to NodeMCU.
+  Connect OLED or LCD display, SCD30, red LED to NodeMCU.
   Optional: Open Serial Monitor at 115200 baud.
 
 */
@@ -39,18 +40,23 @@
 #define DEBUG true              // activate debugging
                                 // true:  print info + data to serial monitor
                                 // false: serial monitor is not used
+#define DISPLAY_OLED true       // OLED display
+#define DISPLAY_LCD false       // LCD display
+// -------------------------------------------------------------------
 
 
 // -------------------------------------------------------------------
 // Import all required libraries
 // -------------------------------------------------------------------
 #include <Wire.h>                 // for I2C communication
-#include <Adafruit_GFX.h>         // for writing to display
-#include <Adafruit_SSD1306.h>     // for writing to display
+#if DISPLAY_OLED
+  #include <Adafruit_GFX.h>       // for writing to display
+  #include <Adafruit_SSD1306.h>   // for writing to display
+#endif
+#if DISPLAY_LCD
+  #include <LiquidCrystal_I2C.h>
+#endif
 #include "SparkFun_SCD30_Arduino_Library.h"
-
-// set to true if WiFi is desired, otherwise corresponding code is not compiled
-#define WIFI_ENABLED true
 
 #if WIFI_ENABLED
   #include <ESP8266WiFi.h>
@@ -63,12 +69,12 @@
   const char* ssid      = "ENTER_SSID";
   const char* password  = "ENTER_PASSWORD";
 #endif
+// -------------------------------------------------------------------
 
-// activate debugging
-//   true:  print info + data to serial monitor
-//   false: serial monitor is not used
-#define DEBUG true
 
+// -------------------------------------------------------------------
+// Hardware configurations and some constants
+// -------------------------------------------------------------------
 #define CO2_THRESHOLD1 600
 #define CO2_THRESHOLD2 1000
 #define CO2_THRESHOLD3 1500
@@ -80,24 +86,45 @@
 #define SCREEN_WIDTH 128          // OLED display width in pixels
 #define SCREEN_HEIGHT 32          // OLED display height in pixels
 
+const int lcdColumns  = 20;       // LCD: number of columns
+const int lcdRows     = 4;        // LCD: number of rows
+
 #define OLED_RESET LED_BUILTIN    // OLED reset pin, 4 is default
                                   // -1 if sharing Arduino reset pin
                                   // using NodeMCU, it is LED_BUILTIN
-                                  
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-SCD30 airSensor;
-// use "unsigned long" for variables that hold time
-//  --> value will quickly become too large for an int
-unsigned long previousMilliseconds = 0;    // store last time scd30 was updated
+const float TempOffset = 5;       // temperature offset of the SCD30
+                                  // 0 is default value
+                                  // 5 is used in SCD30-library example
+                                  // 5 also works for most of my devices
+
+const int altitudeOffset = 300;   // altitude of place of operation in meters
+                                  // Stuttgart: approx 300; Uni Stuttgart: approx 500
 
 // update scd30 readings every MEASURE_INTERVAL seconds
 const long interval = MEASURE_INTERVAL*1000;
 
+// use "unsigned long" for variables that hold time
+//  --> value will quickly become too large for an int
+// store last time scd30 was updated
+unsigned long previousMilliseconds = 0;    
+
 // switch to perform a forced recalibration
 // should only be done once in a while and only when outside 
 bool DO_FORCED_RECALIBRATION = false;
+// -------------------------------------------------------------------
+
+#if DISPLAY_OLED                                  
+  // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+  Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#endif
+#if DISPLAY_LCD
+  // run I2C scanner if LCD address is unknown
+  LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
+#endif
+
+SCD30 airSensor;
+
 
 #if WIFI_ENABLED
   // temperature, humidity, CO2 for web-page, updated in loop()
@@ -107,21 +134,6 @@ bool DO_FORCED_RECALIBRATION = false;
 
   // create AsyncWebServer object on port 80 (port 80 for http)
   AsyncWebServer server(80);
-
-  // function for replacing placeholder on webpage with SCD30 values
-  String processor(const String& var){
-    //Serial.println(var);
-    if(var == "CO2"){
-      return String(co2_web);
-    }
-    else if(var == "TEMPERATURE"){
-      return String(temperature_web);
-    }
-    else if(var == "HUMIDITY"){
-      return String(humidity_web);
-    }
-    return String();
-  }
 #endif
 
 
@@ -135,7 +147,7 @@ void printToSerial( float co2, float temperature, float humidity) {
   Serial.println();
 }
 
-
+#if DISPLAY_OLED
 void printToOLED( float co2, float temperature, float humidity) {
   int
     x0, x1;           // to align output on OLED display vertically
@@ -165,8 +177,53 @@ void printToOLED( float co2, float temperature, float humidity) {
     
   display.display();
 }
+#endif
 
 
+#if DISPLAY_LCD
+void printToLCD( float co2, float temperature, float humidity) {
+
+  byte degreeSymbol[8] = {
+    0b01100, 0b10010, 0b10010, 0b01100,
+    0b00000, 0b00000, 0b00000, 0b00000
+  };
+  // allocate custom char to a location
+  lcd.createChar(0, degreeSymbol);
+
+  //int waitTime  = 2000;
+  lcd.clear();
+  //DrawYoutube();
+  //delay(waitTime);
+
+  // print co2 concentration (1st line, i.e. row 0)
+  lcd.setCursor(0,0);
+  lcd.print("CO2 in ppm");
+  // make output right-aligned
+  lcd.setCursor( (lcdColumns - (int(log10(co2))+1)), 0);
+  lcd.print(int(round(co2)));
+
+  // print temperature (2nd line, i.e. row 1)
+  lcd.setCursor(0,1);
+  lcd.print("Temp. in ");
+  lcd.write(0);
+  lcd.print("C");
+  // make output right-aligned
+  lcd.setCursor( (lcdColumns - (int(log10(temperature))+1)), 1);
+  lcd.print(int(round(temperature)));
+
+  // print humidity (3nd line, i.e. row 2)
+  lcd.setCursor(0,2);
+  lcd.print("Humidity in %");
+  // make output right-aligned
+  lcd.setCursor( (lcdColumns - (int(log10(humidity))+1)), 2);
+  lcd.print(int(round(humidity)));
+
+  //delay(waitTime);
+}
+#endif
+
+
+#if DISPLAY_OLED
 void printEmoji( float value ) {
   // syntax for functions used to draw to OLED:
   // display.drawBitmap(x, y, bitmap data, bitmap width, bitmap height, color)
@@ -302,6 +359,29 @@ void printEmoji( float value ) {
   }
   display.display();
 }
+#endif
+
+
+#if DISPLAY_LCD
+// Parameters:
+//   row:        where text will be printed
+//   message:    text to scroll
+//   delayTime:  time between character shifting
+// inspired by https://randomnerdtutorials.com/esp32-esp8266-i2c-lcd-arduino-ide/
+void scrollLCDText( int row, String message, int delayTime ){
+  // add whitespaces equal to no. LCD-columns at beginning of string
+  for (int i=0; i<lcdColumns ; ++i) {
+    message = " "+message;
+  }
+  message = message+" ";
+  // emulate the scrolling by printing substrings sequentially
+  for (int pos=0 ; pos<message.length(); ++pos){
+    lcd.setCursor(0,row);
+    lcd.print(message.substring(pos, pos+lcdColumns));
+    delay(delayTime);
+  }
+}
+#endif
 
 
 void forced_recalibration(){
@@ -318,6 +398,7 @@ void forced_recalibration(){
     Serial.println("Starting to do a forced recalibration in 10 seconds");
   }
 
+#if DISPLAY_OLED
   display.clearDisplay();
   display.setCursor(0,0);
   display.println("Warning:");
@@ -331,15 +412,19 @@ void forced_recalibration(){
     display.display();
     delay(1000);
   }
+#endif
   
   airSensor.setForcedRecalibrationFactor(CO2_offset_calibration);
 
+#if DISPLAY_OLED
   delay(1000);
   display.clearDisplay();
   display.setCursor(0,0);
   display.println("Successfully recalibrated!");
   display.println("Only required ~once per year");
   display.display();
+#endif
+  
   delay(5000);
   
 }
@@ -348,10 +433,6 @@ void forced_recalibration(){
 void airSensorSetup(){
 
   bool autoSelfCalibration = false;
-
-  // altitude of place of operation in meters
-  // Stuttgart: approx 300; Uni Stuttgart: approx 500
-  int alt = 300;
 
   // Start sensor using the Wire port, but disable the auto-calibration
   if (airSensor.begin(Wire, autoSelfCalibration) == false) {
@@ -370,16 +451,16 @@ void airSensorSetup(){
   // alternatively, one could also use:
   //   airSensor.setAmbientPressure(pressure_in_mBar)
   delay(1000);
-  airSensor.setAltitudeCompensation(alt);
-  
+  airSensor.setAltitudeCompensation(altitudeOffset);
   
   float T_offset = airSensor.getTemperatureOffset();
   Serial.print("Current temp offset: ");
   Serial.print(T_offset, 2);
   Serial.println("C");
 
-  // note that this value also depends on how you installed the SCD30
-  airSensor.setTemperatureOffset(7); //5 is used in example (0 is default value)
+  // note: this value also depends on how you installed 
+  //       the SCD30 in your device 
+  airSensor.setTemperatureOffset(TempOffset);
 }
 
 
@@ -387,6 +468,7 @@ void setup(){
   if (DEBUG == true) {
     // initialize serial monitor at baud rate of 115200
     Serial.begin(115200);
+    delay(1000);
     Serial.println("Using SCD30 to get: CO2 concentration, temperature, humidity");
   }
 
@@ -409,17 +491,40 @@ void setup(){
     if (DEBUG == true)
       Serial.print(".");
   }
+  IPAddress ip = WiFi.localIP();
   if (DEBUG == true)
-    Serial.println(WiFi.localIP());
+    Serial.println(ip);
+
+  // -------------------------------------------------------------------
+  // This is executed when you open the IP in browser
+  // -------------------------------------------------------------------
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    // note: do NOT load MAIN_page into a String variable
+    //       this might not work (probably too large)
+    request->send_P(200, "text/html", MAIN_page );
+  });
+
+  // this page is called by java Script AJAX
+  server.on("/readData", HTTP_GET, [](AsyncWebServerRequest *request){
+    // putting all values into one big string
+    // inspiration: https://circuits4you.com/2019/01/11/nodemcu-esp8266-arduino-json-parsing-example/
+    String data2send = "{\"COO\":\""+String(co2_web)
+                       +"\", \"Temperature\":\""+String(temperature_web) 
+                       +"\", \"Humidity\":\""+ String(humidity_web) +"\"}";
+    request->send_P(200, "text/plain", data2send.c_str());
+  });
+  // -------------------------------------------------------------------
+  
+  server.begin();
 #endif
 
+#if DISPLAY_OLED
   // SSD1306_SWITCHCAPVCC: generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
     if (DEBUG == true) 
       Serial.println(F("SSD1306 allocation failed"));
     for(;;);                      // don't proceed, loop forever
   }
-
   display.display();              // initialize display
                                   // library will show Adafruit logo
   delay(2000);                    // pause for 2 seconds
@@ -431,11 +536,11 @@ void setup(){
   display.setCursor(2,5);
   display.println("CO2 monitor");
   display.println("twitter.com/formbar");
-#if WIFI_ENABLED
-  display.println(WiFi.localIP());
-#else
-  display.println("WiFi disabled");
-#endif
+  #if WIFI_ENABLED
+    display.println(ip);
+  #else
+    display.println("WiFi disabled");
+  #endif
 
   // write previously defined emojis to display
   if (SCREEN_HEIGHT == 32) {
@@ -452,6 +557,17 @@ void setup(){
   }
   
   display.display();              // write display buffer to display
+#endif
+
+#if DISPLAY_LCD
+  lcd.init();                     // initialize LCD
+  lcd.backlight();                // turn on LCD backlight
+  lcd.setCursor(0,0);             // set cursor to (column,row)
+  lcd.print("WiFi connected");
+  lcd.setCursor(0,1);
+  lcd.print(ip);
+  delay(2000);
+#endif
 
   // turn warning LED on and off to test it
   digitalWrite(WARNING_DIODE_PIN, HIGH);
@@ -460,24 +576,7 @@ void setup(){
 
   // initialize SCD30
   airSensorSetup();
-
-#if WIFI_ENABLED
-  // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
-  });
-  server.on("/co2", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/plain", String(co2_web).c_str());
-  });
-  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/plain", String(temperature_web).c_str());
-  });
-  server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/plain", String(humidity_web).c_str());
-  });
-  // Start server
-  server.begin();
-#endif
+  
 }
 
 
@@ -504,7 +603,7 @@ void loop(){
     previousMilliseconds = currentMilliseconds;
 
     if (airSensor.dataAvailable()) {
-      // get data from SCD30 sensor
+      // get updated data from SCD30 sensor
       co2_new         = airSensor.getCO2();
       temperature_new = airSensor.getTemperature();
       humidity_new    = airSensor.getHumidity();
@@ -513,9 +612,17 @@ void loop(){
       if (DEBUG == true)
         printToSerial(co2_new, temperature_new, humidity_new);
 
-      // print data to OLED display
+      // print data to display
+#if DISPLAY_OLED
       printToOLED(co2_new, temperature_new, humidity_new);
-
+      // print smiley with happiness according to CO2 concentration
+      printEmoji( co2_new);
+#endif
+#if DISPLAY_LCD
+      printToLCD(co2_new, temperature_new, humidity_new);
+      if (co2_web > CO2_THRESHOLD3)
+        scrollLCDText( 3, "LUEFTEN", 250 );
+#endif
 #if WIFI_ENABLED
       // updated values for webpage
       co2_web         = co2_new;
@@ -525,13 +632,11 @@ void loop(){
     }
 
     // if CO2-value is too high, issue a warning  
-    if (co2_new >= CO2_THRESHOLD3) {
+    if (co2_web >= CO2_THRESHOLD3) {
       digitalWrite(WARNING_DIODE_PIN, HIGH);
     } else {
       digitalWrite(WARNING_DIODE_PIN, LOW);
     }
-
-    // print smiley with happiness according to CO2 concentration
-    printEmoji( co2_new);
   }
+  delay(100);
 }
