@@ -86,7 +86,7 @@ const char MAIN_page[] PROGMEM = R"=====(
   <div>
     <table id="dataTable">
       <tr>
-        <th>Time</th>
+        <th><i class="far fa-clock"></i> Time</th>
         <th><i class="fas fa-head-side-cough" style="color:#ffffff;"></i> CO2 concentration in ppm</th>
         <th><i class="fas fa-thermometer-half" style="color:#ffffff;"></i> Temperaure in &deg;C</th>
         <th><i class="fas fa-tint" style="color:#ffffff;"></i> Humidity in %</th>
@@ -110,117 +110,127 @@ const char MAIN_page[] PROGMEM = R"=====(
   var updateIntervall = 10000;
 
   // Graphs visit: https://www.chartjs.org
-  function showGraph() {
-    // graph for CO2 concentration
-    var ctx = document.getElementById("Chart1").getContext('2d');
-    var Chart1 = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: timeStamp,  //Bottom Labeling
-        datasets: [{
-          label           : "CO2 concentration",
-          fill            : false,  //Try with true
-          backgroundColor : 'rgba( 243,18, 156 , 1)', //Dot marker color
-          borderColor     : 'rgba( 243, 18, 156 , 1)', //Graph Line Color
-          data            : CO2values,
-        }],
+  // graph for CO2 concentration
+  var ctx = document.getElementById("Chart1").getContext('2d');
+  var Chart1 = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: timeStamp,  //Bottom Labeling
+      datasets: [{
+        label           : "CO2 concentration",
+        fill            : 'origin',                   // 'origin': fill area to x-axis
+        backgroundColor : 'rgba( 243,18, 156 , 1)',   // marker color
+        borderColor     : 'rgba( 243, 18, 156 , 1)',  // line Color
+        data            : CO2values,
+      }],
+    },
+    options: {
+      title: {
+        display         : false,
+        text            : "CO2 concentration"
       },
-      options: {
-        title: {
-          display         : false,
-          text            : "CO2 concentration"
-        },
-        maintainAspectRatio: false,
-        elements: {
-          line: {
-            tension       : 0.5 //Smoothening (Curved) of data lines
-          }
-        },
-        scales: {
-          yAxes: [{
-            display       : true,
-            position      : 'left',
-            ticks: {
-              beginAtZero :false,
-              precision   : 0,
-              fontSize    :16
-            },
-            scaleLabel: {
-              display     : true,
-              // unicode for subscript:   u+208x, 
-              //         for superscript: u+207x
-              labelString : 'CO\u2082 in ppm',
-              fontSize    : 20
-            },
-          }]
+      maintainAspectRatio: false,
+      elements: {
+        line: {
+          tension       : 0.5 //Smoothening (Curved) of data lines
         }
+      },
+      scales: {
+        yAxes: [{
+          display       : true,
+          position      : 'left',
+          ticks: {
+            beginAtZero :false,
+            precision   : 0,
+            fontSize    :16
+          },
+          scaleLabel: {
+            display     : true,
+            // unicode for subscript:   u+208x, 
+            //         for superscript: u+207x
+            labelString : 'CO\u2082 in ppm',
+            fontSize    : 20
+          },
+        }]
       }
-    });
-    // temperature and humidity graph
-    var ctx2 = document.getElementById("Chart2").getContext('2d');
-    var Chart2 = new Chart(ctx2, {
-      type: 'line',
-      data: {
-        labels: timeStamp,  //Bottom Labeling
-        datasets: [{
-          label           : "Temperature",
-          fill            : false,                      // allows to fill area to xAxis
-          backgroundColor : 'rgba( 243, 156, 18 , 1)',  // marker color
-          borderColor     : 'rgba( 243, 156, 18 , 1)',  // line Color
-          yAxisID         : 'left',
-          data            : Tvalues,
+    }
+  });
+  // temperature and humidity graph
+  var ctx2 = document.getElementById("Chart2").getContext('2d');
+  var Chart2 = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: timeStamp,  //Bottom Labeling
+      datasets: [{
+        label           : "Temperature",
+        fill            : false,                      // allows to fill area to xAxis
+        backgroundColor : 'rgba( 243, 156, 18 , 1)',  // marker color
+        borderColor     : 'rgba( 243, 156, 18 , 1)',  // line Color
+        yAxisID         : 'left',
+        data            : Tvalues,
+      }, {
+        label           : "Humidity",
+        fill            : false,                      // allows to fill area to xAxis
+        backgroundColor : 'rgba(156, 18, 243 , 1)',   // marker color
+        borderColor     : 'rgba(156, 18, 243 , 1)',   // line Color
+        data            : Hvalues,
+        yAxisID         : 'right',
+      }],
+    },
+    options: {
+      title: {
+        display         : false,
+        text            : "CO2 Monitor"
+      },
+      maintainAspectRatio: false,
+      elements: {
+        line: {
+          tension       : 0.4                         // smoothening (bezier curve tension)
+        }
+      },
+      scales: {
+        yAxes: [{
+          id            : 'left',
+          position      : 'left',
+          scaleLabel: {
+            display     : true,
+            labelString : 'Temperature in \u00B0 C',
+            fontSize    : 20
+          }, 
+          ticks: {
+            suggestedMin: 15,
+            suggestedMax: 35,
+            fontSize    :16
+          }
         }, {
-          label           : "Humidity",
-          fill            : false,                      // allows to fill area to xAxis
-          backgroundColor : 'rgba(156, 18, 243 , 1)',   // marker color
-          borderColor     : 'rgba(156, 18, 243 , 1)',   // line Color
-          data            : Hvalues,
-          yAxisID         : 'right',
-        }],
-      },
-      options: {
-        title: {
-          display         : false,
-          text            : "CO2 Monitor"
-        },
-        maintainAspectRatio: false,
-        elements: {
-          line: {
-            tension       : 0.4                         // smoothening (bezier curve tension)
+          id            : 'right',
+          position      : 'right',
+          scaleLabel: {
+            display     : true,
+            labelString : 'Humidity in %',
+            fontSize    : 20
+          },
+          ticks: {
+            suggestedMin: 30,
+            suggestedMax: 80,
+            fontSize    :16
           }
-        },
-        scales: {
-          yAxes: [{
-            id            : 'left',
-            position      : 'left',
-            scaleLabel: {
-              display     : true,
-              labelString : 'Temperature in \u00B0 C',
-              fontSize    : 20
-            }, 
-            ticks: {
-              suggestedMin: 15,
-              suggestedMax: 35,
-              fontSize    :16
-            }
-          }, {
-            id            : 'right',
-            position      : 'right',
-            scaleLabel: {
-              display     : true,
-              labelString : 'Humidity in %',
-              fontSize    : 20
-            },
-            ticks: {
-              suggestedMin: 30,
-              suggestedMax: 80,
-              fontSize    :16
-            }
-          }]
-        }
+        }]
       }
-    });
-  }
+    }
+  });
+
+  // function to dynamically updating graphs
+  // much more efficient than replotting every time
+  function updateCharts() {
+    // update datasets to be plotted
+    Chart1.data.datasets[0].data = CO2values;
+    Chart2.data.datasets[0].data = Tvalues;
+    Chart2.data.datasets[1].data = Hvalues;
+    // update the charts
+    Chart1.update();
+    Chart2.update();
+  };
 
   // ajax script to get data repetivitely
   
@@ -281,7 +291,7 @@ const char MAIN_page[] PROGMEM = R"=====(
         }
   
         // update graphs
-        showGraph();
+        updateCharts();
         
         // update data table
         var table = document.getElementById("dataTable");
