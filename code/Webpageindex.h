@@ -119,8 +119,8 @@ const char MAIN_page[] PROGMEM = R"=====(
       datasets: [{
         label           : "CO2 concentration",
         fill            : 'origin',                   // 'origin': fill area to x-axis
-        backgroundColor : 'rgba( 243,18, 156 , 1)',   // marker color
-        borderColor     : 'rgba( 243, 18, 156 , 1)',  // line Color
+        backgroundColor : 'rgba( 243, 18, 156 , .5)', // point fill color
+        borderColor     : 'rgba( 243, 18, 156 , 1)',  // point stroke color
         data            : CO2values,
       }],
     },
@@ -171,8 +171,8 @@ const char MAIN_page[] PROGMEM = R"=====(
       }, {
         label           : "Humidity",
         fill            : false,                      // allows to fill area to xAxis
-        backgroundColor : 'rgba(156, 18, 243 , 1)',   // marker color
-        borderColor     : 'rgba(156, 18, 243 , 1)',   // line Color
+        backgroundColor : 'rgba(104, 145, 195, 1)',   // marker color
+        borderColor     : 'rgba(104, 145, 195, 1)',   // line Color
         data            : Hvalues,
         yAxisID         : 'right',
       }],
@@ -194,13 +194,13 @@ const char MAIN_page[] PROGMEM = R"=====(
           position      : 'left',
           scaleLabel: {
             display     : true,
-            labelString : 'Temperature in \u00B0 C',
+            labelString : 'Temperature in \u00B0C',
             fontSize    : 20
           }, 
           ticks: {
-            suggestedMin: 15,
-            suggestedMax: 35,
-            fontSize    :16
+            suggestedMin: 18,
+            suggestedMax: 30,
+            fontSize    : 16
           }
         }, {
           id            : 'right',
@@ -211,9 +211,9 @@ const char MAIN_page[] PROGMEM = R"=====(
             fontSize    : 20
           },
           ticks: {
-            suggestedMin: 30,
-            suggestedMax: 80,
-            fontSize    :16
+            suggestedMin: 40,
+            suggestedMax: 70,
+            fontSize    : 16
           }
         }]
       }
