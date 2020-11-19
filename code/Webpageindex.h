@@ -14,12 +14,13 @@ const char MAIN_page[] PROGMEM = R"=====(
 <head>
   <title>CO2 Monitor</title>
   <!-- very helpful reference: https://www.w3schools.com -->
+  <meta charset="utf-8">
   <!-- make webpage fit to your browser, not matter what OS or browser (also adjusts font sizes) -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- load Font Awesome, get integrity and url here: https://fontawesome.com/account/cdn --> 
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-HzLeBuhoNPvSl5KYnjx0BT+WB0QEEqLprO+NBkkk5gbc67FTaL7XIGa2w1L0Xbgc" crossorigin="anonymous">
   <!-- load chart.js library, this could also copied to esp8266 for usuage without internet connection -->
-  <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>  
+  <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <style>
     canvas{
       -moz-user-select: none;
@@ -62,7 +63,8 @@ const char MAIN_page[] PROGMEM = R"=====(
 <body>
   <div style="text-align:center;">
     <p style="font-size:20px">
-      <b>CO<sub>2</sub> Monitor: data logger (using Chart.js)</b>
+      <b>CO<sub>2</sub>Monitor: data logger (using Chart.js)</b>   
+      <button type="button" class="btn btn-secondary" onclick="downloadData()">Download data</button>
     </p>
     <p>
       <i class="fab fa-github" style="font-size:1.0rem;color:black;"></i>
@@ -230,6 +232,35 @@ const char MAIN_page[] PROGMEM = R"=====(
     // update the charts
     Chart1.update();
     Chart2.update();
+  };
+
+  // function to download data arrays into csv-file
+  function downloadData() {
+    // build array of strings with data to be saved
+    var data = [];
+    for ( var ii=0 ; ii < CO2values.length ; ii++ ){
+      data.push( [ timeStamp[ii], 
+                   CO2values[ii].toString(), 
+                   Tvalues[ii].toString(), 
+                   Hvalues[ii].toString()
+                 ]);
+    }
+    
+    // build String containing all data to be saved (csv-formatted)
+    var csv = 'Time,CO2 in ppm,Temperature in Celsius,Humidity in percent\n';
+    data.forEach(function(row) {
+      csv += row.join(',');
+      csv += "\n";
+    });
+    
+    // save csv-string into file
+    // create a hyperlink element (defined by <a> tag)
+    var hiddenElement     = document.createElement('a');
+    // similar functions: encodeURI(), encodeURIComponent() (escape() not recommended)
+    hiddenElement.href    = 'data:text/csv;charset=utf-8,'+encodeURI(csv);
+    hiddenElement.target  = '_blank';
+    hiddenElement.download= 'CO2monitor.csv';
+    hiddenElement.click();
   };
 
   // ajax script to get data repetivitely
