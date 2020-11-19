@@ -240,7 +240,7 @@ const char MAIN_page[] PROGMEM = R"=====(
     var data = [];
     for ( var ii=0 ; ii < CO2values.length ; ii++ ){
       data.push( [ timeStamp[ii], 
-                   CO2values[ii].toString(), 
+                   Math.round(CO2values[ii]).toString(), 
                    Tvalues[ii].toString(), 
                    Hvalues[ii].toString()
                  ]);
@@ -332,7 +332,7 @@ const char MAIN_page[] PROGMEM = R"=====(
         var cell3 = row.insertCell(2);
         var cell4 = row.insertCell(3);
         cell1.innerHTML = time;
-        cell2.innerHTML = obj.COO;
+        cell2.innerHTML = Math.round(obj.COO);
         cell3.innerHTML = obj.Temperature;
         cell4.innerHTML = obj.Humidity;
       }
