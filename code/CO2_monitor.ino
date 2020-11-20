@@ -58,8 +58,8 @@
 #endif
 #include "SparkFun_SCD30_Arduino_Library.h"
 
+#include <ESP8266WiFi.h>          // also allows to explicitely turn WiFi off
 #if WIFI_ENABLED
-  #include <ESP8266WiFi.h>
   #include <Hash.h>               // for SHA1 algorith (for Font Awesome)
   #include <ESPAsyncTCP.h>
   #include <ESPAsyncWebServer.h>
@@ -516,6 +516,12 @@ void setup(){
   // -------------------------------------------------------------------
   
   server.begin();
+#else
+  WiFi.mode( WIFI_OFF );          // explicitely turn WiFi off
+  WiFi.forceSleepBegin();         // explicitely turn WiFi off
+  delay( 1 );                     // required to apply WiFi changes
+  if (DEBUG == true) 
+    Serial.println("WiFi is turned off.");
 #endif
 
 #if DISPLAY_OLED
