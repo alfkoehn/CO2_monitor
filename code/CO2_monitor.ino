@@ -40,8 +40,8 @@
 #define DEBUG true              // activate debugging
                                 // true:  print info + data to serial monitor
                                 // false: serial monitor is not used
-#define DISPLAY_OLED true       // OLED display
-#define DISPLAY_LCD false       // LCD display
+#define DISPLAY_OLED            // OLED display
+//#define DISPLAY_LCD           // LCD display
 // -------------------------------------------------------------------
 
 
@@ -49,11 +49,11 @@
 // Import all required libraries
 // -------------------------------------------------------------------
 #include <Wire.h>                 // for I2C communication
-#if DISPLAY_OLED
+#ifdef DISPLAY_OLED
   #include <Adafruit_GFX.h>       // for writing to display
   #include <Adafruit_SSD1306.h>   // for writing to display
 #endif
-#if DISPLAY_LCD
+#ifdef DISPLAY_LCD
   #include <LiquidCrystal_I2C.h>
 #endif
 #include "SparkFun_SCD30_Arduino_Library.h"
@@ -114,11 +114,11 @@ unsigned long previousMilliseconds = 0;
 bool DO_FORCED_RECALIBRATION = false;
 // -------------------------------------------------------------------
 
-#if DISPLAY_OLED                                  
+#ifdef DISPLAY_OLED                                  
   // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
   Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #endif
-#if DISPLAY_LCD
+#ifdef DISPLAY_LCD
   // run I2C scanner if LCD address is unknown
   LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
 #endif
@@ -147,7 +147,7 @@ void printToSerial( float co2, float temperature, float humidity) {
   Serial.println();
 }
 
-#if DISPLAY_OLED
+#ifdef DISPLAY_OLED
 void printToOLED( float co2, float temperature, float humidity) {
   int
     x0, x1;           // to align output on OLED display vertically
@@ -180,7 +180,7 @@ void printToOLED( float co2, float temperature, float humidity) {
 #endif
 
 
-#if DISPLAY_LCD
+#ifdef DISPLAY_LCD
 void printToLCD( float co2, float temperature, float humidity) {
 
   byte degreeSymbol[8] = {
@@ -223,7 +223,7 @@ void printToLCD( float co2, float temperature, float humidity) {
 #endif
 
 
-#if DISPLAY_OLED
+#ifdef DISPLAY_OLED
 void printEmoji( float value ) {
   // syntax for functions used to draw to OLED:
   // display.drawBitmap(x, y, bitmap data, bitmap width, bitmap height, color)
@@ -362,7 +362,7 @@ void printEmoji( float value ) {
 #endif
 
 
-#if DISPLAY_LCD
+#ifdef DISPLAY_LCD
 // Parameters:
 //   row:        where text will be printed
 //   message:    text to scroll
@@ -398,7 +398,7 @@ void forced_recalibration(){
     Serial.println("Starting to do a forced recalibration in 10 seconds");
   }
 
-#if DISPLAY_OLED
+#ifdef DISPLAY_OLED
   display.clearDisplay();
   display.setCursor(0,0);
   display.println("Warning:");
@@ -416,7 +416,7 @@ void forced_recalibration(){
   
   airSensor.setForcedRecalibrationFactor(CO2_offset_calibration);
 
-#if DISPLAY_OLED
+#ifdef DISPLAY_OLED
   delay(1000);
   display.clearDisplay();
   display.setCursor(0,0);
@@ -524,7 +524,7 @@ void setup(){
     Serial.println("WiFi is turned off.");
 #endif
 
-#if DISPLAY_OLED
+#ifdef DISPLAY_OLED
   // SSD1306_SWITCHCAPVCC: generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
     if (DEBUG == true) 
@@ -565,7 +565,7 @@ void setup(){
   display.display();              // write display buffer to display
 #endif
 
-#if DISPLAY_LCD
+#ifdef DISPLAY_LCD
   lcd.init();                     // initialize LCD
   lcd.backlight();                // turn on LCD backlight
   lcd.setCursor(0,0);             // set cursor to (column,row)
@@ -619,12 +619,12 @@ void loop(){
         printToSerial(co2_new, temperature_new, humidity_new);
 
       // print data to display
-#if DISPLAY_OLED
+#ifdef DISPLAY_OLED
       printToOLED(co2_new, temperature_new, humidity_new);
       // print smiley with happiness according to CO2 concentration
       printEmoji( co2_new);
 #endif
-#if DISPLAY_LCD
+#ifdef DISPLAY_LCD
       printToLCD(co2_new, temperature_new, humidity_new);
       if (co2_web > CO2_THRESHOLD3)
         scrollLCDText( 3, "LUEFTEN", 250 );
