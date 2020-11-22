@@ -426,7 +426,6 @@ void forced_recalibration(){
 #endif
   
   delay(5000);
-  
 }
 
 
@@ -434,9 +433,8 @@ void airSensorSetup(){
 
   bool autoSelfCalibration = false;
 
-  // Start sensor using the Wire port, but disable the auto-calibration
+  // start sensor using the Wire port, but disable the auto-calibration
   if (airSensor.begin(Wire, autoSelfCalibration) == false) {
-  //if (airSensor.begin() == false) {
     if (DEBUG == true)
       Serial.println("Air sensor not detected. Please check wiring. Freezing...");
     while (1)
@@ -582,7 +580,6 @@ void setup(){
 
   // initialize SCD30
   airSensorSetup();
-  
 }
 
 
