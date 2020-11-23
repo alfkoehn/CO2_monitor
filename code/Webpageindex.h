@@ -17,6 +17,8 @@ const char MAIN_page[] PROGMEM = R"=====(
   <meta charset="utf-8">
   <!-- make webpage fit to your browser, not matter what OS or browser (also adjusts font sizes) -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- prevent request on favicon, otherwise ESP receives favicon request every time web server is accessed -->
+  <link rel="icon" href="data:,">
   <!-- load Font Awesome, get integrity and url here: https://fontawesome.com/account/cdn --> 
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-HzLeBuhoNPvSl5KYnjx0BT+WB0QEEqLprO+NBkkk5gbc67FTaL7XIGa2w1L0Xbgc" crossorigin="anonymous">
   <!-- load chart.js library, this could also copied to esp8266 for usuage without internet connection -->
@@ -63,7 +65,7 @@ const char MAIN_page[] PROGMEM = R"=====(
 <body>
   <div style="text-align:center;">
     <p style="font-size:20px">
-      <b>CO<sub>2</sub>Monitor: data logger (using Chart.js)</b>   
+      <b>CO<sub>2</sub> Monitor: data logger (using Chart.js)</b>   
       <button type="button" onclick="downloadData()">Download data</button>
     </p>
     <p>
