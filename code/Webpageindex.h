@@ -64,7 +64,7 @@ const char MAIN_page[] PROGMEM = R"=====(
   <div style="text-align:center;">
     <p style="font-size:20px">
       <b>CO<sub>2</sub>Monitor: data logger (using Chart.js)</b>   
-      <button type="button" class="btn btn-secondary" onclick="downloadData()">Download data</button>
+      <button type="button" onclick="downloadData()">Download data</button>
     </p>
     <p>
       <i class="fab fa-github" style="font-size:1.0rem;color:black;"></i>
