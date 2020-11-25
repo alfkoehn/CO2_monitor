@@ -7,7 +7,7 @@
 \documentclass[12pt,a4paper]{article}
 
 %allows to type the umlaute directly
-%\usepackage[utf8]{inputenc}
+\usepackage[utf8]{inputenc}
 
 %for including graphics
 \usepackage{graphicx}
@@ -134,19 +134,32 @@ This work was inspired by a project of the \textit{Hochschule Trier}~\cite{BIRKE
 \section{The \coo monitor}
 The \coo monitor is based on the microelectronic sensor SCD30 which measures the \coo concentration and also provides measurements of the ambient temperature and relative humidity~\cite{SENSIRION2020B}. Using Arduino as a programing language and some microcontroller, it is straightforward to get the sensor running and outputting data, thanks to the examples available in the libraries provided by SparkFun~\cite{SPARKFUN2020}. Using the Arduino IDE~\cite{ARDUINOIDE2020}, which is available for all major operating systems, the corresponding libraries can be simply included via the library manager. 
 
-To make the \coo monitor visually appealing, we decided to output the measurement to an OLED display (which is very inexpensive and available in a large variety of sizes and configurations). Due to the widespread usage of such displays, they can also be directly included via the library manager in the Arduino IDE. In addition to just showing some numbers, we have included a red LED which lights up as soon as some threshold value of the \coo concentration is reached, indicating the need for ventilation. One could also think of a traffic light design, where first a yellow LED lights up at a slightly lower threshold value. The \textit{Federation of European Heating, Ventilation and Air Conditioning associations (REHVA)} recommend to issue a warning, corresponding to an orange light, when a value of $800\,\mathrm{ppm}$ is reached and prompt to trigger some action like ventilation, corresponding to a red light, when $1000\,\mathrm{ppm}$ are reached~\cite{REHVA2020}. The \textit{Federal Ministry of Labour and Social Affairs} of Germany also states a threshold value of $1000\,\mathrm{ppm}$ that should not be passed~\cite{BMA2020}. Note that a value of approximately $410\,\mathrm{ppm}$ is the typical \coo concentration of air~\cite{NOAA2020}.
+To make the \coo monitor visually appealing, we decided to output the measurement to an OLED display (which is inexpensive and available in a large variety of sizes and configurations). Due to the widespread usage of such displays, they can also be directly included via the library manager in the Arduino IDE. In addition to just showing some numbers, we have included a red LED which lights up as soon as some threshold value of the \coo concentration is reached, indicating the need for ventilation. One could also think of a traffic light design, where first a yellow LED lights up at a slightly lower threshold value. The \textit{Federation of European Heating, Ventilation and Air Conditioning associations (REHVA)} recommend to issue a warning, corresponding to an orange light, when a value of $800\,\mathrm{ppm}$ is reached and prompt to trigger some action like ventilation, corresponding to a red light, when $1000\,\mathrm{ppm}$ are reached~\cite{REHVA2020}. The \textit{Federal Ministry of Labour and Social Affairs} of Germany also states a threshold value of $1000\,\mathrm{ppm}$ that should not be passed~\cite{BMA2020}. Note that a value of approximately $410\,\mathrm{ppm}$ is the typical \coo concentration of air~\cite{NOAA2020}.
 
 As controller we decided to use the low-cost open source NodeMCU board~\cite{NODEMCU2020}, as it offers enough flexibility to further extend the functionality of the \coo monitor. Of particular interest might be the WiFi capability allowing for example to write the measured values to a web-server where they can then accessed via a web-browser or an app on a smartphone. 
 
-A prototype of the \coo monitor is shown in Fig.~\ref{f:CO2_monitor_photo}. As one can see, it is not enclosed in some box to still allow easy access for modifications. The idea of this prototype was rather to show that the general principle of the \coo monitor is working and not to provide a polished final product. The prototype is ready to be used in a class room or lecture hall, although it might be worth to mount everything into a box which is not only visually more appealing but provides also some protection.
 \begin{figure}[ht]
-\center
+\centering
 \includegraphics[height=.48\textwidth]{figs/CO2_detector_photo2.jpg}
 \hspace{1em}
 \includegraphics[height=.48\textwidth]{figs/CO2_detector_photo1.jpg}
 \caption{Assembled and working prototype of the \coo monitor, \textit{(left)} with a measured \coo concentration below the threshold and \textit{(right)} above it (note the red LED).}
 \label{f:CO2_monitor_photo}
 \end{figure}
+A prototype of the \coo monitor is shown in Fig.~\ref{f:CO2_monitor_photo}. As one can see, it is not enclosed in some box to still allow easy access for modifications. The idea of this prototype was rather to show that the general principle of the \coo monitor is working and not to provide a polished final product. The prototype is ready to be used in a class room or lecture hall, although it might be worth to mount everything into a box which is not only visually more appealing but provides also some protection.
+
+\subsection{Positioning in a room}
+The \coo monitor should be placed at a position in a room where it is not exposed to flowing air as this would distort the measured \coo concentration (see Section~\ref{s:SCD30}). This means that it should, for example, not be placed in-between a window and a door if both are used for efficient cross ventilation%
+\footnote{Altough cross ventilation is more efficient than impact ventilation (``querlüften'' vs. ``stoßlüften''~\cite{GUARDIAN2020}) one has to take care that behind the open door in Fig.~\ref{f:CO2_monitor_positioning} another open window is needed otherwise one could release part of the classroom air and its potentially infectious aerosols into the corridor which connects different classrooms or lecture halls.}. 
+Figure~\ref{f:CO2_monitor_positioning} indicates the optimal positioning in such a situation. It should also not be positioned too close to the students' or teachers' heads as they could temporarily trigger very high values being displayed on the \coo monitor if directly exhaling onto it. A position slightly above everybody's head seems to be best as this would also allow everybody to have a look at it. 
+\begin{figure}[tb]
+\centering
+\includegraphics[height=.4\textwidth]{figs/CO2monitor_positioning.png}
+\caption{Optimal position of the \coo monitor in a room where ventilation by an air flow across the room (cross ventilation) can be applied.}
+\label{f:CO2_monitor_positioning}
+\end{figure}
+
+Also be aware that classrooms and lecture halls often provide only a small number of wall sockets. One would thus need either a long enough power cable or a power bank (USB charger) which can also be included in the case of the \coo monitor itself.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -184,7 +197,7 @@ For the prototype design of the \coo monitor we have decided to leave out a prop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CO2 Sensor: NDIR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The \coo sensor}
+\section{The \coo sensor}\label{s:SCD30}
 The SCD30 has been chosen because it performs direct measurements of the \coo concentration. Cheaper sensors often measure the concentration of volatile organic compounds (VOC) and then assume a correlation between the two quantities. This can, however, lead to wrong values of the \coo concentration since VOC can be emitted from a variety of chemicals. Although VOCs are also known to cause health problems, here we are explicitly interested in the \coo concentration, as discussed in Sec.~\ref{s:intro}. For a discussion about monitoring VOC and \coo concentration with self-assembled devices we would like to point the interested reader 
 to e.g.\ Ref.~\cite{CHIESA2019}.
 
