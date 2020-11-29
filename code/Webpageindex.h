@@ -167,14 +167,14 @@ const char MAIN_page[] PROGMEM = R"=====(
       labels: timeStamp,  //Bottom Labeling
       datasets: [{
         label           : "Temperature",
-        fill            : false,                      // allows to fill area to xAxis
+        fill            : false,                      // fill area to xAxis
         backgroundColor : 'rgba( 243, 156, 18 , 1)',  // marker color
         borderColor     : 'rgba( 243, 156, 18 , 1)',  // line Color
         yAxisID         : 'left',
         data            : Tvalues,
       }, {
         label           : "Humidity",
-        fill            : false,                      // allows to fill area to xAxis
+        fill            : false,                      // fill area to xAxis
         backgroundColor : 'rgba(104, 145, 195, 1)',   // marker color
         borderColor     : 'rgba(104, 145, 195, 1)',   // line Color
         data            : Hvalues,
@@ -327,12 +327,12 @@ const char MAIN_page[] PROGMEM = R"=====(
         updateCharts();
         
         // update data table
-        var table = document.getElementById("dataTable");
-        var row   = table.insertRow(1); //Add after headings
-        var cell1 = row.insertCell(0);
-        var cell2 = row.insertCell(1);
-        var cell3 = row.insertCell(2);
-        var cell4 = row.insertCell(3);
+        var table       = document.getElementById("dataTable");
+        var row         = table.insertRow(1); //Add after headings
+        var cell1       = row.insertCell(0);
+        var cell2       = row.insertCell(1);
+        var cell3       = row.insertCell(2);
+        var cell4       = row.insertCell(3);
         cell1.innerHTML = time;
         cell2.innerHTML = Math.round(obj.COO);
         cell3.innerHTML = obj.Temperature;
@@ -342,7 +342,7 @@ const char MAIN_page[] PROGMEM = R"=====(
     xhttp.open("GET", "readData", true); //Handle readData server on ESP8266
     xhttp.send();
   }
-    
+
 </script>
 </body>
 </html>
