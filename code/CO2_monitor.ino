@@ -320,22 +320,21 @@ void loop(){
 #endif
 #ifdef DISPLAY_LCD
       printToLCD(co2_new, temperature_new, humidity_new);
-      if (co2_web > CO2_THRESHOLD3)
+      if (co2_new > CO2_THRESHOLD3)
         scrollLCDText( 3, "LUEFTEN", 250 );
 #endif
+      // if CO2-value is too high, issue a warning  
+      if (co2_new >= CO2_THRESHOLD3) {
+        digitalWrite(WARNING_DIODE_PIN, HIGH);
+      } else {
+        digitalWrite(WARNING_DIODE_PIN, LOW);
+      }
 #if WIFI_ENABLED
       // updated values for webpage
       co2_web         = co2_new;
       temperature_web = temperature_new;
       humidity_web    = humidity_new;
 #endif
-    }
-
-    // if CO2-value is too high, issue a warning  
-    if (co2_web >= CO2_THRESHOLD3) {
-      digitalWrite(WARNING_DIODE_PIN, HIGH);
-    } else {
-      digitalWrite(WARNING_DIODE_PIN, LOW);
     }
   }
   delay(100);
