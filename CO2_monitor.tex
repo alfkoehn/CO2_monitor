@@ -175,10 +175,10 @@ The parts used for the prototype of the \coo monitor are listed in Table~\ref{t:
 \begin{tabular}{cccc}\toprule
 Element & Quantity & Price \\\hline
 SCD30 (\coo sensor) & 1 & $45\,$\euro \\
-NodeMCU EPS8266 & 1 & $8\,$\euro \\
+NodeMCU ESP8266 & 1 & $5\,$\euro \\
 $0.91\inchsign$ OLED display	& 1	& $5\,$\euro \\
 red LED					& 1 	& $0.2\,$\euro \\
-$220\,\mathrm{Omega}$ resistor	& 1	& $.1\,$\euro \\
+$220\,\mathrm{\Omega}$ resistor	& 1	& $0.1\,$\euro \\
 mini breadboard		& 1 & $4\,$\euro \\
 breadboard cables	& 10 & $4\,$\euro \\
 pin header			& 1 & $0.5\,$\euro \\
@@ -301,17 +301,17 @@ The code for the webpage itself is shown in Listing~\ref{lst:website_html}.
 {code/Webpageindex.h}
 
 As usual, the function declarations are all located at the end of the code but are briefly discussed first before coming to the main \texttt{setup()} and \texttt{loop()} functions. The function to print the data obtained from the SCD30 to the serial console is shown in Listing~\ref{lst:printSerial}. Since it is possible to use an OLED and/or LCD display to show the measured data, a separate function for each case is included in the code, see Listing~\ref{lst:printOLED} and Listing~~\ref{lst:printLCD}
-\lstinputlisting[firstline=425, lastline=433, caption={Function which prints data to the serial console.},label={lst:printSerial}]%
+\lstinputlisting[firstline=428, lastline=438, caption={Function which prints data to the serial console.},label={lst:printSerial}]%
 {code/CO2_monitor.ino} 
-\lstinputlisting[firstline=436, lastline=466, caption={Function which prints data to an OLED display.}, label={lst:printOLED}]%
+\lstinputlisting[firstline=439, lastline=469, caption={Function which prints data to an OLED display.}, label={lst:printOLED}]%
 {code/CO2_monitor.ino} 
-\lstinputlisting[firstline=469, lastline=509, caption={Function which prints data to an LCD display.}, label={lst:printLCD}]%
+\lstinputlisting[firstline=472, lastline=512, caption={Function which prints data to an LCD display.}, label={lst:printLCD}]%
 {code/CO2_monitor.ino} 
 
 Depending on the the \coo concentration, the OLED display shows an emoji with the level of happiness being correlated to the value of the \coo concentration. The corresponding function to draw that face is given in Listing~\ref{lst:printOLEDampel}. For the LCD display, a warning is shown if the \coo concentration is too high, the corresponding code is shown in Listing~\ref{lst:printLCDampel}.
-\lstinputlisting[firstline=512, lastline=648, caption={Function which prints smileys to the OLED display depending on the value of the \coo concentration.}, label={lst:printOLEDampel}]%
+\lstinputlisting[firstline=515, lastline=651, caption={Function which prints smileys to the OLED display depending on the value of the \coo concentration.}, label={lst:printOLEDampel}]%
 {code/CO2_monitor.ino} 
-\lstinputlisting[firstline=651, lastline=670, caption={Function which prints a warning to the LCD display depending on the value of the \coo concentration.}, label={lst:printLCDampel}]%
+\lstinputlisting[firstline=654, lastline=673, caption={Function which prints a warning to the LCD display depending on the value of the \coo concentration.}, label={lst:printLCDampel}]%
 {code/CO2_monitor.ino} 
 
 Listing~\ref{lst:setup} shows the \texttt{setup} function of the code, where the serial monitor is initialized, followed by the diode, optionally the WiFi, the OLED display, and then the SCD30. Finally, the webserver and the functions required to update the data on the webpage are prepared.
@@ -319,9 +319,9 @@ Listing~\ref{lst:setup} shows the \texttt{setup} function of the code, where the
 {code/CO2_monitor.ino}
 
 The calibration and setup of the SCD30 is put into a separate function, shown in Listing~\ref{lst:SCD30setup}. An additional function, given in Listing~\ref{lst:SCD30_FRC}, performs the forced recalibration of the SCD30 discussed in Section~\ref{s:SCD30calibration}.
-\lstinputlisting[firstline=347, lastline=377, caption={Setup code for the SCD30.}, label={lst:SCD30setup}]%
+\lstinputlisting[firstline=347, lastline=380, caption={Setup code for the SCD30.}, label={lst:SCD30setup}]%
 {code/CO2_monitor.ino}
-\lstinputlisting[firstline=380, lastline=422, caption={Function to perform a forced recalibration of the SCD30.}, label={lst:SCD30_FRC}]%
+\lstinputlisting[firstline=383, lastline=425, caption={Function to perform a forced recalibration of the SCD30.}, label={lst:SCD30_FRC}]%
 {code/CO2_monitor.ino}
 
 The main code, the \texttt{loop} function, is given in Listing~\ref{lst:main}. First, the data is obtained from the SCD30 sensor and then passed to a function outputting it to the serial monitor and then to another function, printing it on an OLED and/or LCD display. The data is then copied into the corresponding global variables to prepare the next update for the webpage. Finally, it is checked if the \coo concentration is above a critical threshold: a red LED indicates too high a value in our example, in addition some reaction on the OLED/LCD display is shown (one could also think of an acoustic signal and some visual change on the webpage).
