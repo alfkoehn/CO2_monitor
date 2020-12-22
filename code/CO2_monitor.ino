@@ -348,13 +348,16 @@ void airSensorSetup(){
 
   bool autoSelfCalibration = false;
 
-  // start sensor using the Wire port, but disable the auto-calibration
-  if (airSensor.begin(Wire, autoSelfCalibration) == false) {
+  // start sensor using the Wire port
+  if (airSensor.begin(Wire) == false) {
     if (DEBUG == true)
       Serial.println("Air sensor not detected. Please check wiring. Freezing...");
     while (1)
       ;
   }
+
+  // disable auto-calibration (import, see full documentation for details)
+  airSensor.setAutoSelfCalibration(autoSelfCalibration);
   
   // SCD30 has data ready at maximum every two seconds
   // can be set to 1800 at maximum (30 minutes)
