@@ -224,14 +224,14 @@ void setup(){
     // -------------------------------------------------------------------
     // This is executed when you open the IP in browser
     // -------------------------------------------------------------------
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
       // note: do NOT load MAIN_page into a String variable
       //       this might not work (probably too large)
-    request->send_P(200, "text/html", MAIN_page );
+      request->send_P(200, "text/html", MAIN_page );
     });
 
     // this page is called by java Script AJAX
-    server.on("/readData", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/readData", HTTP_GET, [](AsyncWebServerRequest *request) {
       // putting all values into one big string
       // inspiration: https://circuits4you.com/2019/01/11/nodemcu-esp8266-arduino-json-parsing-example/
       String data2send = "{\"COO\":\""+String(co2_web)
