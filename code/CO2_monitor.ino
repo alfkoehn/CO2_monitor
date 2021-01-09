@@ -38,8 +38,8 @@
 #define WIFI_ENABLED false      // set to true if WiFi is desired, 
                                 // otherwise corresponding code is not compiled
 #if WIFI_ENABLED
-#define WIFI_WEBSERVER false
-#define WIFI_MQTT true                    
+  #define WIFI_WEBSERVER true   // website in your WiFi for data and data logger
+  #define WIFI_MQTT false       // activate MQTT integration in your WiFi
 #endif
 #define DEBUG true              // activate debugging
                                 // true:  print info + data to serial monitor
@@ -66,14 +66,15 @@
 #include <ESP8266WiFi.h>          // also allows to explicitely turn WiFi off
 #if WIFI_ENABLED
   #if WIFI_WEBSERVER
-    #include <Hash.h>               // for SHA1 algorith (for Font Awesome)
+    #include <Hash.h>             // for SHA1 algorith (for Font Awesome)
     #include <ESPAsyncTCP.h>
     #include <ESPAsyncWebServer.h>
-    #include "Webpageindex.h"       // webpage content, same folder as .ino file
+
+    #include "Webpageindex.h"     // webpage content, same folder as .ino file
   #endif
 
   #if WIFI_MQTT
-    #include <PubSubClient.h>
+    #include <PubSubClient.h>     // allows to send and receive MQTT messages
 
     //add local MQTT server IP here.
     IPAddress mqttserver(192, 168, 1, 100);
@@ -113,7 +114,7 @@ const float TempOffset = 5;       // temperature offset of the SCD30
                                   // 5 also works for most of my devices
 
 const int altitudeOffset = 300;   // altitude of place of operation in meters
-                                  // Stuttgart: approx 300; Uni Stuttgart: approx 500
+                                  // Stuttgart: approx 300; Uni Stuttgart: approx 500; Lohne: 67
 
 // update scd30 readings every MEASURE_INTERVAL seconds
 const long interval = MEASURE_INTERVAL*1000;
@@ -173,8 +174,12 @@ SCD30 airSensor;
     AsyncWebServer server(80);
   #endif
   #if WIFI_MQTT
+    // declare (initialize) object of class WiFiClient (to establish connection to IP/port)
     WiFiClient espClient;
+    // declare (initialize) object of class PubSubClient
+    // input: constructor of previously defined WiFiClient
     PubSubClient mqttClient(espClient);
+    // message to be published to mqtt topic
     char mqttMessage[10];
   #endif
 #endif
@@ -200,6 +205,8 @@ void setup(){
 
 #if WIFI_ENABLED
   #if WIFI_MQTT
+  // configure mqtt server details, after that client is ready
+  // create connection to mqtt broker
   mqttClient.setServer(mqttserver, 1883);
   #endif
   /* Explicitly set ESP8266 to be a WiFi-client, otherwise, it would, by
@@ -368,9 +375,13 @@ void loop(){
       temperature_web = temperature_new;
       humidity_web    = humidity_new;
 #if WIFI_MQTT
+      // boolean connect (clientID, [username, password])
+      // see https://pubsubclient.knolleary.net/api
       mqttClient.connect(deviceName);
 #if SEND_VCC
       sprintf(mqttMessage, "%d", vdd);
+      // boolean publish (topic, payload)
+      // publish message to the specified topic
       mqttClient.publish("esp-co2/co2/vcc", mqttMessage );
 #endif
       mqttClient.publish("esp-co2/co2/hostname", deviceName );
