@@ -37,11 +37,16 @@
 // -------------------------------------------------------------------
 #define WIFI_ENABLED false      // set to true if WiFi is desired, 
                                 // otherwise corresponding code is not compiled
+#if WIFI_ENABLED
+#define WIFI_WEBSERVER false
+#define WIFI_MQTT true                    
+#endif
 #define DEBUG true              // activate debugging
                                 // true:  print info + data to serial monitor
                                 // false: serial monitor is not used
 #define DISPLAY_OLED            // OLED display
 //#define DISPLAY_LCD           // LCD display
+#define SEND_VCC false
 // -------------------------------------------------------------------
 
 
@@ -60,14 +65,23 @@
 
 #include <ESP8266WiFi.h>          // also allows to explicitely turn WiFi off
 #if WIFI_ENABLED
-  #include <Hash.h>               // for SHA1 algorith (for Font Awesome)
-  #include <ESPAsyncTCP.h>
-  #include <ESPAsyncWebServer.h>
-  #include "Webpageindex.h"       // webpage content, same folder as .ino file
+  #if WIFI_WEBSERVER
+    #include <Hash.h>               // for SHA1 algorith (for Font Awesome)
+    #include <ESPAsyncTCP.h>
+    #include <ESPAsyncWebServer.h>
+    #include "Webpageindex.h"       // webpage content, same folder as .ino file
+  #endif
 
+  #if WIFI_MQTT
+    #include <PubSubClient.h>
+
+    //add local MQTT server IP here.
+    IPAddress mqttserver(192, 168, 1, 100);
+  #endif
   // Replace with your network credentials
   const char* ssid      = "ENTER_SSID";
   const char* password  = "ENTER_PASSWORD";
+  const char* deviceName = "ENTER_ESP_DEVICE_NAME";
 #endif
 // -------------------------------------------------------------------
 
@@ -154,10 +168,21 @@ SCD30 airSensor;
   float humidity_web    = 0.0;
   float co2_web         = 0.0;
 
-  // create AsyncWebServer object on port 80 (port 80 for http)
-  AsyncWebServer server(80);
+  #if WIFI_WEBSERVER
+    // create AsyncWebServer object on port 80 (port 80 for http)
+    AsyncWebServer server(80);
+  #endif
+  #if WIFI_MQTT
+    WiFiClient espClient;
+    PubSubClient mqttClient(espClient);
+    char mqttMessage[10];
+  #endif
 #endif
 
+#if SEND_VCC
+  ADC_MODE(ADC_VCC);
+  int vdd;
+#endif
 
 void setup(){
   if (DEBUG == true) {
@@ -174,6 +199,9 @@ void setup(){
   pinMode(WARNING_DIODE_PIN, OUTPUT);
 
 #if WIFI_ENABLED
+  #if WIFI_MQTT
+  mqttClient.setServer(mqttserver, 1883);
+  #endif
   /* Explicitly set ESP8266 to be a WiFi-client, otherwise, it would, by
      default, try to act as both, client and access-point, and could cause
      network-issues with other WiFi-devices on your WiFi-network. */
@@ -190,27 +218,29 @@ void setup(){
   if (DEBUG == true)
     Serial.println(ip);
 
-  // -------------------------------------------------------------------
-  // This is executed when you open the IP in browser
-  // -------------------------------------------------------------------
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    // note: do NOT load MAIN_page into a String variable
-    //       this might not work (probably too large)
-    request->send_P(200, "text/html", MAIN_page );
-  });
+  #if WIFI_WEBSERVER
+    // -------------------------------------------------------------------
+    // This is executed when you open the IP in browser
+    // -------------------------------------------------------------------
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+      // note: do NOT load MAIN_page into a String variable
+      //       this might not work (probably too large)
+      request->send_P(200, "text/html", MAIN_page );
+    });
 
-  // this page is called by java Script AJAX
-  server.on("/readData", HTTP_GET, [](AsyncWebServerRequest *request){
-    // putting all values into one big string
-    // inspiration: https://circuits4you.com/2019/01/11/nodemcu-esp8266-arduino-json-parsing-example/
-    String data2send = "{\"COO\":\""+String(co2_web)
-                       +"\", \"Temperature\":\""+String(temperature_web) 
-                       +"\", \"Humidity\":\""+ String(humidity_web) +"\"}";
-    request->send_P(200, "text/plain", data2send.c_str());
-  });
-  // -------------------------------------------------------------------
+    // this page is called by java Script AJAX
+    server.on("/readData", HTTP_GET, [](AsyncWebServerRequest *request) {
+      // putting all values into one big string
+      // inspiration: https://circuits4you.com/2019/01/11/nodemcu-esp8266-arduino-json-parsing-example/
+      String data2send = "{\"COO\":\""+String(co2_web)
+                         +"\", \"Temperature\":\""+String(temperature_web) 
+                         +"\", \"Humidity\":\""+ String(humidity_web) +"\"}";
+      request->send_P(200, "text/plain", data2send.c_str());
+    });
+    // -------------------------------------------------------------------
   
-  server.begin();
+    server.begin();
+  #endif
 #else
   WiFi.mode( WIFI_OFF );          // explicitely turn WiFi off
   WiFi.forceSleepBegin();         // explicitely turn WiFi off
@@ -301,6 +331,9 @@ void loop(){
   if (currentMilliseconds - previousMilliseconds >= interval) {
     // save the last time you updated the DHT values
     previousMilliseconds = currentMilliseconds;
+#if SEND_VCC
+    vdd = ESP.getVcc();
+#endif
 
     if (airSensor.dataAvailable()) {
       // get updated data from SCD30 sensor
@@ -334,6 +367,20 @@ void loop(){
       co2_web         = co2_new;
       temperature_web = temperature_new;
       humidity_web    = humidity_new;
+#if WIFI_MQTT
+      mqttClient.connect(deviceName);
+#if SEND_VCC
+      sprintf(mqttMessage, "%d", vdd);
+      mqttClient.publish("esp-co2/co2/vcc", mqttMessage );
+#endif
+      mqttClient.publish("esp-co2/co2/hostname", deviceName );
+      sprintf(mqttMessage, "%6.2f", co2_web);
+      mqttClient.publish("esp-co2/co2/co2", mqttMessage );
+      sprintf(mqttMessage, "%6.2f", temperature_web);
+      mqttClient.publish("esp-co2/co2/temp", mqttMessage );
+      sprintf(mqttMessage, "%6.2f", humidity_web);
+      mqttClient.publish("esp-co2/co2/hum", mqttMessage );
+#endif
 #endif
     }
   }
