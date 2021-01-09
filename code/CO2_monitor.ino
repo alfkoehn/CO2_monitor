@@ -73,7 +73,6 @@
   #endif
 
   #if WIFI_MQTT
-    #include <ESP8266HTTPClient.h>
     #include <PubSubClient.h>
 
     //add local MQTT server IP here.
@@ -175,7 +174,8 @@ SCD30 airSensor;
   #endif
   #if WIFI_MQTT
     WiFiClient espClient;
-    PubSubClient client(espClient);
+    PubSubClient mqttClient(espClient);
+    char mqttMessage[10];
   #endif
 #endif
 
@@ -183,8 +183,6 @@ SCD30 airSensor;
   ADC_MODE(ADC_VCC);
   int vdd;
 #endif
-char buf[10];
-
 
 void setup(){
   if (DEBUG == true) {
@@ -202,7 +200,7 @@ void setup(){
 
 #if WIFI_ENABLED
   #if WIFI_MQTT
-  client.setServer(mqttserver, 1883);
+  mqttClient.setServer(mqttserver, 1883);
   #endif
   /* Explicitly set ESP8266 to be a WiFi-client, otherwise, it would, by
      default, try to act as both, client and access-point, and could cause
@@ -370,18 +368,18 @@ void loop(){
       temperature_web = temperature_new;
       humidity_web    = humidity_new;
 #if WIFI_MQTT
-      client.connect(deviceName);
+      mqttClient.connect(deviceName);
 #if SEND_VCC
-      sprintf(buf, "%d", vdd);
-      client.publish("esp-co2/co2/vcc", buf );
+      sprintf(mqttMessage, "%d", vdd);
+      mqttClient.publish("esp-co2/co2/vcc", mqttMessage );
 #endif
-      client.publish("esp-co2/co2/hostname", deviceName );
-      sprintf(buf, "%6.2f", co2_web);
-      client.publish("esp-co2/co2/co2", buf );
-      sprintf(buf, "%6.2f", temperature_web);
-      client.publish("esp-co2/co2/temp", buf );
-      sprintf(buf, "%6.2f", humidity_web);
-      client.publish("esp-co2/co2/hum", buf );
+      mqttClient.publish("esp-co2/co2/hostname", deviceName );
+      sprintf(mqttMessage, "%6.2f", co2_web);
+      mqttClient.publish("esp-co2/co2/co2", mqttMessage );
+      sprintf(mqttMessage, "%6.2f", temperature_web);
+      mqttClient.publish("esp-co2/co2/temp", mqttMessage );
+      sprintf(mqttMessage, "%6.2f", humidity_web);
+      mqttClient.publish("esp-co2/co2/hum", mqttMessage );
 #endif
 #endif
     }
