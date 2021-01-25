@@ -100,7 +100,7 @@
 \maketitle
 
 \begin{abstract}
-This paper describes the setup of a simple yet reliable \coo monitor which is based on open-source microelectronics hardware. The monitor is intended to be used in class rooms, lecture halls or offices and can be constructed as a joint students project. It was motivated by recent discussions on the role of aerosols being part of exhaled air to spread the corona virus. The aerosol concentration in air is correlated with the \coo concentration. Measuring the latter can thus help to slow-down the spread of the corona-virus. The program code used for the \coo monitor and this documentation is available as a GitHub repository to allow to updates and improvements. 
+This paper describes the setup of a simple yet reliable \coo monitor which is based on open-source microelectronics hardware. The monitor is intended to be used in class rooms, lecture halls or offices and can be constructed as a joint students project. It was motivated by recent discussions on the role of aerosols being part of exhaled air to spread the corona virus. The aerosol concentration in air is correlated with the \coo concentration. Measuring the latter can thus help to slow-down the spread of the corona-virus. The program code used for the \coo monitor and this documentation is available as a GitHub repository to allow for updates and improvements. 
 \\ \quad \\ First full version released on 2020-09-22.
 \\ \quad \\ License for this document: \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0}
 %\\ \quad \\ \textbf{version: \myisodate} \\ \quad \\ \textbf{FOR INTERNAL USE ONLY}
@@ -119,13 +119,13 @@ This paper describes the setup of a simple yet reliable \coo monitor which is ba
 \section{Introduction}\label{s:intro}
 It is generally accepted that the \coo concentration in a class room has an influence on students' activities, their ability to study and learn~\cite{TWARDELLA2012,GAIHRE2014}, or on their health and thus attendance~\cite{SHENDELL2004}. The same applies of course to office environments~\cite{ALLEN2016}. The major source of \coo in a class room is the exhaled air of the students (and teachers)~\cite{PERSILY2017}. It thus increases over time but can also be relatively easy controlled by proper ventilation. Monitoring the \coo concentration over time provides thus a simple way to ensure a productive and healthy learning environment. 
 
-In addition to \coo, exhaled air consists of aerosols (among other things). It is now generally accepted that the aerosols of patients being infected with Sars-CoV-2, might contain viable virus concentrations which are large enough to cause further infections if somebody else inhales those aerosols~\cite{LEDNICKY2020,MORAWSKA2020,KOHANSKI2020,SETTI2020}. Note that this seems to happen even if the infected patients show no symptoms of Sars-CoV-2~\cite{FURUKAWA2020} or not yet any symptoms~\cite{SUN2020}. It is thus not surprising that the vast majority of Sars-CoV-2 virus transmission seems to happen indoors~\cite{QIAN2020} and that closing schools and universities, for example, were found to have a significant effect on the spread of the virus~\cite{BRAUNER2020}. Face masks can help to reduce the aerosol outflow and thus also slowing down the infection rates~\cite{HOWARD2020,MITTAL2020}. 
+In addition to \coo, exhaled air consists of aerosols (among other things). It is now generally accepted that the aerosols of patients being infected with SARS-CoV-2, might contain viable virus concentrations which are large enough to cause further infections if somebody else inhales those aerosols~\cite{LEDNICKY2020,MORAWSKA2020,KOHANSKI2020,SETTI2020}. Note that this seems to happen even if the infected patients show no symptoms of SARS-CoV-2~\cite{FURUKAWA2020} or not yet any symptoms~\cite{SUN2020}. It is thus not surprising that the vast majority of SARS-CoV-2 virus transmissions seems to happen indoors~\cite{QIAN2020} and that closing schools and universities, for example, were found to have a significant effect on the spread of the virus~\cite{BRAUNER2020}. Face masks can help to reduce the aerosol outflow and thus also slow down the infection rates~\cite{HOWARD2020,MITTAL2020}. 
 
-With half-life periods of the virus on aerosols on the order of 1 hour~\cite{DOREMALEN2020}, it becomes evident that proper ventilation, strongly reducing the aerosol concentration, can help to prevent hidden infections, i.e.\ infections where the infected person is not (yet) aware of their infection but already contagious. This is further stressed by a case study from a seafood market in south China~\cite{ZHANG2020}, a restaurant also from China~\cite{LI2020}, or from a choir in the US~\cite{MILLER2020}. Note that ventilation was already recommended as a proper measure against the spread of the Spanish flu more than 100 years ago~\cite{SOPER1919}. 
+With half-life periods of the virus on aerosols on the order of 1 hour~\cite{DOREMALEN2020}, it becomes evident that proper ventilation, strongly reducing the aerosol concentration, can help to prevent hidden infections, i.e.\ infections where the infected person is not (yet) aware of their infection but already contagious. This is further stressed by a case study from a seafood market in south China~\cite{ZHANG2020}, a restaurant also from China~\cite{LI2020}, or from a choir in the US~\cite{MILLER2020}. Note that ventilation was already recommended as a proper measure against the spread of a different pandemic, the Spanish flu, more than 100 years ago~\cite{SOPER1919}. 
 
 Since aerosols and \coo are both parts of exhaled air, measuring the \coo concentration in a room provides an easy accessible indicator for the aerosol concentration~\cite{HARTMANN2020,BHAGAT2020}. In recent recommendations from national authorities, it was suggested to use the \coo concentration as an indicator when ventilation is required~\cite{VOSS2020,BMA2020a,RKI2020}. A relevant example for the positive effect of proper ventilation based on the \coo concentration in a room is the stopping of a tuberculosis outbreak at the Taipei University in Taiwan: only after the air circulation in every room was improved such that the \coo concentration stayed around $600\,\mathrm{ppm}$ (the outdoor value is approximately $400\,\mathrm{ppm}$), the outbreak came to a halt and stopped completely~\cite{DU2020}. 
 
-While commercial \coo monitors do exist~\cite{ARANET2020,TFA2020,WOEHLER2020}, these might be considered too expensive for usage in large quantities in schools or universities and/or have long delivery times at the moment (since their potential help in slowing down the spread of the Sars-CoV-2 virus seems to become more and more accepted). Here we present a simple and cost effective, yet reliable way to monitor the \coo concentration. Widely available microelectronic components are used which can be easily programmed via open source software platforms allowing to modify and extend the examples presented in this paper. Students can build the detectors in class as a joint project which might serve to raise interest in electronics or the underlying physical and chemical processes~\cite{WATZKA2011}. 
+While commercial \coo monitors do exist~\cite{ARANET2020,TFA2020,WOEHLER2020}, these might be considered too expensive for usage in large quantities in schools or universities and/or currently have long delivery times (since their potential help in slowing down the spread of the SARS-CoV-2 virus seems to become more and more accepted). Here we present a simple and cost effective, yet reliable way to monitor the \coo concentration. Widely available microelectronic components are used which can be easily programmed via open source software platforms allowing to modify and extend the examples presented in this paper. Students can build the detectors in class as a joint project which might serve to raise interest in electronics or the underlying physical and chemical processes~\cite{WATZKA2011}. 
 
 This work was inspired by a project of the \textit{Hochschule Trier}~\cite{BIRKENFELD2020}, where the design and construction of a \coo measuring device is suggested as a students' project, allowing to discuss a variety of scientific topics during the course of the project. In addition, a few posts from different forums served as an inspiration~\cite{BOYLES2020,METROPOL2020,OMBRA2020,ZENTRIS2020}. Furthermore, a small number of projects hosted and maintained as GitHub repositories and webpages using the same \coo detector are available~\cite{MKETZ2020,NETZBASTELN2020,PAULVHA2020,RUHE2020}. We would like to recommend the interested reader in particular to the repository by paulvha~\cite{PAULVHA2020} as it contains a rather large number of examples and to an article published in the \textit{Make Magazin}~\cite{MAKEMAGAZIN2020} which contains a full description including the assembly of a \coo monitor similar to the one presented in this paper.
 
@@ -133,24 +133,32 @@ This work was inspired by a project of the \textit{Hochschule Trier}~\cite{BIRKE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CO2 monitor %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The \coo monitor}
+\section{The \coo monitor}\label{s:co2monitor}
 The \coo monitor is based on the microelectronic sensor SCD30 which measures the \coo concentration and also provides measurements of the ambient temperature and relative humidity~\cite{SENSIRION2020B}. Using Arduino as a programing language and some microcontroller, it is straightforward to get the sensor running and outputting data, thanks to the examples available in the libraries provided by SparkFun~\cite{SPARKFUN2020}. Using the Arduino IDE~\cite{ARDUINOIDE2020}, which is available for all major operating systems, the corresponding libraries can be simply included via the library manager. 
 
 To make the \coo monitor visually appealing, we decided to output the measurement to an OLED display (which is inexpensive and available in a large variety of sizes and configurations). Due to the widespread usage of such displays, they can also be directly included via the library manager in the Arduino IDE. Alternatively, an LCD display can be used which has the advantage of being larger in diameter but having a reduced resolution at a similar price. Note that we recommend to use LCD-displays with I2C-modules to make the wiring and/or soldering less complicated (connecting 4 cables instead of 16).
 
-In addition to just showing some numbers, we have included a red LED at the prototype installation which lights up as soon as some threshold value of the \coo concentration is reached, indicating the need for ventilation. One could also think of a traffic light design, where first a yellow LED lights up at a slightly lower threshold value. The \textit{Federation of European Heating, Ventilation and Air Conditioning associations (REHVA)} recommend to issue a warning, corresponding to an orange light, when a value of $800\,\mathrm{ppm}$ is reached and prompt to trigger some action like ventilation, corresponding to a red light, when $1000\,\mathrm{ppm}$ are reached~\cite{REHVA2020}. The \textit{Federal Ministry of Labour and Social Affairs} of Germany also states a threshold value of $1000\,\mathrm{ppm}$ that should not be passed~\cite{BMA2020}. Note that a value of approximately $410\,\mathrm{ppm}$ is the typical \coo concentration of air~\cite{NOAA2020}.
+In addition to just showing some numbers, we have included a red LED at the prototype installation which lights up as soon as some threshold value of the \coo concentration is reached, indicating the need for ventilation. One could also think of a traffic light design, where first a yellow LED lights up at a slightly lower threshold value. The \textit{Federation of European Heating, Ventilation and Air Conditioning associations (REHVA)} recommends to issue a warning, corresponding to an orange light, when a value of $800\,\mathrm{ppm}$ is reached and prompt to trigger some action like ventilation, corresponding to a red light, when $1000\,\mathrm{ppm}$ are reached~\cite{REHVA2020}. The \textit{Federal Ministry of Labour and Social Affairs} of Germany also states a threshold value of $1000\,\mathrm{ppm}$ that should not be passed~\cite{BMA2020}. Note that a value of approximately $410\,\mathrm{ppm}$ is the typical \coo concentration of fresh air~\cite{NOAA2020}.
 
-As controller we decided to use the low-cost open source NodeMCU board~\cite{NODEMCU2020}, as it offers enough flexibility to further extend the functionality of the \coo monitor. Of particular interest might be the WiFi capability allowing for example to write the measured values to a web-server where they can then accessed via a web-browser or an app on a smartphone. 
+As a microcontroller we decided to use the low-cost open source NodeMCU ESP8266 board~\cite{NODEMCU2020}, as it offers enough flexibility to further extend the functionality of the \coo monitor. Of particular interest might be the WiFi capability allowing for example to write the measured values to a web-server where they can then be accessed via a web-browser or an app on a smartphone. 
 
-\begin{figure}[ht]
+\begin{figure}[t]
 \centering
-\includegraphics[height=.48\textwidth]{figs/CO2_detector_photo2.jpg}
+\includegraphics[height=.55\textwidth]{figs/CO2monitor_version1_2.jpg}
 \hspace{1em}
-\includegraphics[height=.48\textwidth]{figs/CO2_detector_photo1.jpg}
+\includegraphics[height=.55\textwidth]{figs/CO2monitor_version1_1.jpg}
 \caption{Assembled and working prototype of the \coo monitor, \textit{(left)} with a measured \coo concentration below the threshold and \textit{(right)} above it (note the red LED).}
 \label{f:CO2_monitor_photo}
 \end{figure}
 A prototype of the \coo monitor is shown in Fig.~\ref{f:CO2_monitor_photo}. As one can see, it is not enclosed in some box to still allow easy access for modifications. The idea of this prototype was rather to show that the general principle of the \coo monitor is working and not to provide a polished final product. The prototype is ready to be used in a class room or lecture hall, although it might be worth to mount everything into a box which is not only visually more appealing but provides also some protection.
+
+As a next step one might want to replace the breadboard by a stripboard which of course requires some soldering but results in a more robust device. Instead of designing a case for the \coo monitor, it is possible to use cases which were originally designed for a Raspberry Pi or an Arduino Uno. Furthermore, the LEDs as an indicator for the level of the \coo concentration can be replaced by a smiley face on the OLED display whose happiness correlates with the \coo concentration: a higher level results in a more sad face. Figure~\ref{f:CO2_monitor_version2} shows a photography of such an assembly, referred to as \coo monitor version 2. More details about different assembly variations are discussed in Section~\ref{s:assembly}.
+\begin{figure}[t]
+\centering
+\includegraphics[width=.8\textwidth]{figs/CO2monitor_version2.jpg}
+\caption{Assembled \coo monitor, version 2. Note the usage of a stripboard and a casing originally designed for an Arduino Uno. In addition to the actual value, the \coo concentration is indicated by the happiness of a smiley face shown next to the numbers on the OLED display.}
+\label{f:CO2_monitor_version2}
+\end{figure}
 
 \subsection{Positioning in a room}
 The \coo monitor should be placed at a position in a room where it is not exposed to flowing air as this would distort the measured \coo concentration (see Section~\ref{s:SCD30}). This means that it should, for example, not be placed in-between a window and a door if both are used for efficient cross ventilation%
@@ -232,14 +240,14 @@ To perform the FRC, the \coo monitor simply needs to be placed outside somewhere
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Assembling %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Assembly}
+\section{Assembly}\label{s:assembly}
 \begin{figure}[ht]
 \center
 \includegraphics[height=.48\textwidth]{figs/CO2_detector_bb.png}
-\caption{Schematic of a prototype of the \coo monitor.}
+\caption{Schematic of a prototype of the \coo monitor (version 1).}
 \label{f:CO2_fritzing}
 \end{figure}
-The \coo monitor can be assembled in various ways, here we will restrict ourselves to the case of a simple prototype design on a breadboard as shown in Fig.~\ref{f:CO2_fritzing}. The connection between the NodeMCU (with the ESP8266) and the SCD30 sensor is as follows:\\
+The \coo monitor can be assembled in various ways, first we will restrict ourselves to the case of a simple prototype design on a breadboard as shown in Fig.~\ref{f:CO2_fritzing}. The connection between the NodeMCU (with the ESP8266) and the SCD30 sensor is as follows:\\
 
 \begin{tabular}{rcl}\toprule
 	NodeMCU		& & SCD30\\\hline
@@ -252,7 +260,7 @@ The \coo monitor can be assembled in various ways, here we will restrict ourselv
 \end{tabular}\\
 \quad\\
 
-The NodeMCU then needs to be connected to the OLED display as follows:\\
+The NodeMCU ESP8266 board then needs to be connected to the OLED display as follows:\\
 
 \begin{tabular}{rcl}\toprule
 	NodeMCU		& & OLED display\\\hline
@@ -265,6 +273,14 @@ The NodeMCU then needs to be connected to the OLED display as follows:\\
 \quad\\
 
 It is of course also possible to directly connect the respective \texttt{SDA} and \texttt{SCL} pins of the OLED and the SCD30, as shown in Fig.~\ref{f:CO2_fritzing}, instead of connecting those pins between the SCD30 and the NodeMCU. The red LED is connected with its anode, the longer leg, to pin \texttt{D8/GPIO15} of the NodeMCU and with its cathode, the shorter leg, via a $220\,\Omega$ resistor (to limit the current) to ground.  
+
+As discussed in Section~\ref{s:co2monitor}, different assemblies of the \coo monitor are possible. Figure~\ref{f:CO2_monitor_version3} shows what we refer to as \textit{version 3} in various stages of the assembly process. Compared to version 2, a larger OLED display is used, which requires to updates its size at the beginning of the program code, see Listing~\ref{lst:global_constants}. As can be seen, the breadboard from version 1 is replaced by a stripboard onto which the necessary components need to be soldered. The casing is the same as in version 2 (which was originally intended to be used for an Arduino UNO). The side wall closest to the SCD30 has been omitted to ensure that the gas atmosphere inside the casing is the same as outside (a few holes drilled into that wall should have had the same effect). A portable battery charger, a power bank, is used as a power supply allowing for mobile usage of the \coo monitor across the day. 
+\begin{figure}[t]
+\centering
+\includegraphics[width=.85\textwidth]{figs/CO2monitor_version3.jpg}
+\caption{\coo monitor, version 3, in various stages of the assembly process. As compared to version 2, see Fig.~\ref{f:CO2_monitor_version2}, a larger OLED display is used, the SCD30 is mounted in a different way, and a slightly smaller stripboard is used.}
+\label{f:CO2_monitor_version3}
+\end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
