@@ -274,7 +274,7 @@ The NodeMCU ESP8266 board then needs to be connected to the OLED display as foll
 
 It is of course also possible to directly connect the respective \texttt{SDA} and \texttt{SCL} pins of the OLED and the SCD30, as shown in Fig.~\ref{f:CO2_fritzing}, instead of connecting those pins between the SCD30 and the NodeMCU. The red LED is connected with its anode, the longer leg, to pin \texttt{D8/GPIO15} of the NodeMCU and with its cathode, the shorter leg, via a $220\,\Omega$ resistor (to limit the current) to ground.  
 
-As discussed in Section~\ref{s:co2monitor}, different assemblies of the \coo monitor are possible. Figure~\ref{f:CO2_monitor_version3} shows what we refer to as \textit{version 3} in various stages of the assembly process. Compared to version 2, a larger OLED display is used, which requires to updates its size at the beginning of the program code, see Listing~\ref{lst:global_constants}. As can be seen, the breadboard from version 1 is replaced by a stripboard onto which the necessary components need to be soldered. The casing is the same as in version 2 (which was originally intended to be used for an Arduino UNO). The side wall closest to the SCD30 has been omitted to ensure that the gas atmosphere inside the casing is the same as outside (a few holes drilled into that wall should have had the same effect). A portable battery charger, a power bank, is used as a power supply allowing for mobile usage of the \coo monitor across the day. 
+As discussed in Section~\ref{s:co2monitor}, different assemblies of the \coo monitor are possible. Figure~\ref{f:CO2_monitor_version3} shows what we refer to as \textit{version 3} in various stages of the assembly process. Compared to version 2, a larger OLED display is used, which requires to updates its size at the beginning of the program code, see Listing~\ref{lst:global_constants}. As can be seen, the breadboard from version 1 is replaced by a stripboard onto which the necessary components need to be soldered. The casing is the same as in version 2 (which was originally intended to be used for an Arduino Uno). The side wall closest to the SCD30 has been omitted to ensure that the gas atmosphere inside the casing is the same as outside (a few holes drilled into that wall should have had the same effect). A portable battery charger, a power bank, is used as a power supply allowing for mobile usage of the \coo monitor across the day. 
 \begin{figure}[t]
 \centering
 \includegraphics[width=.85\textwidth]{figs/CO2monitor_version3.jpg}
@@ -282,6 +282,13 @@ As discussed in Section~\ref{s:co2monitor}, different assemblies of the \coo mon
 \label{f:CO2_monitor_version3}
 \end{figure}
 
+A different assembly is shown in Fig.~\ref{f:CO2_monitor_version4}, where a picture frame and an 4-row LCD display is used. The picture frame comes at a price of approximately $2\,$\euro\ and the LCD display is available at this size for approximately $10\,$\euro. The thickness of the picture frame allows to mount the other electronic components in it resulting in a visually appealing device. The finite thickness also allows to simply put the picture frame on a table/desk (or any other flat surface). 
+\begin{figure}[t]
+\centering
+\includegraphics[width=.85\textwidth]{figs/CO2monitor_version4.jpg}
+\caption{\coo monitor, version 4. As compared to version 2 and 3, see Figs.~\ref{f:CO2_monitor_version2} and \ref{f:CO2_monitor_version3}, an LCD display is used which and mounted in a picture frame which allows to hide the other electronics due to its thickness of several centimeters.}
+\label{f:CO2_monitor_version4}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
