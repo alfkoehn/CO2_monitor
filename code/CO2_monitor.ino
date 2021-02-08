@@ -35,18 +35,11 @@
 // -------------------------------------------------------------------
 // Some switches defining general behaviour of the program
 // -------------------------------------------------------------------
-#define WIFI_ENABLED false      // set to true if WiFi is desired, 
-                                // otherwise corresponding code is not compiled
-#if WIFI_ENABLED
-  #define WIFI_WEBSERVER true   // website in your WiFi for data and data logger
-  #define WIFI_MQTT false       // activate MQTT integration in your WiFi
-#endif
-#define DEBUG true              // activate debugging
-                                // true:  print info + data to serial monitor
-                                // false: serial monitor is not used
-#define DISPLAY_OLED            // OLED display
-//#define DISPLAY_LCD           // LCD display
-#define SEND_VCC false
+// moved to settings.h
+#include "settings.h"
+#include "credentials.h"  
+
+
 // -------------------------------------------------------------------
 
 
@@ -61,7 +54,7 @@
 #ifdef DISPLAY_LCD
   #include <LiquidCrystal_I2C.h>
 #endif
-#include "SparkFun_SCD30_Arduino_Library.h"
+#include <SparkFun_SCD30_Arduino_Library.h>
 
 #include <ESP8266WiFi.h>          // also allows to explicitely turn WiFi off
 #if WIFI_ENABLED
@@ -76,44 +69,27 @@
   #if WIFI_MQTT
     #include <PubSubClient.h>     // allows to send and receive MQTT messages
 
-    //add local MQTT server IP here.
-    IPAddress mqttserver(192, 168, 1, 100);
+    //add local MQTT server IP here. Or in config.h
+    const char* mqttserver    = MQTT_SERVER_IP;
+    const char* mqtt_user     = MQTT_USERNAME; 
+    const char* mqtt_passwd   = MQTT_PASSWORD;
+    const char* mqtt_topic_prefix    = MQTT_TOPIC_PREFIX;
   #endif
-  // Replace with your network credentials
-  const char* ssid      = "ENTER_SSID";
-  const char* password  = "ENTER_PASSWORD";
-  const char* deviceName = "ENTER_ESP_DEVICE_NAME";
+  // Replace with your network credentials. Or in config.h
+  const char* ssid      = WIFI_SSID;
+  const char* password  = WIFI_PASSWORD;
+  const char* deviceName = ESP_DEVICE_NAME;
 #endif
 // -------------------------------------------------------------------
 
 
-// -------------------------------------------------------------------
-// Hardware configurations and some global constants
-// -------------------------------------------------------------------
-#define CO2_THRESHOLD1 600
-#define CO2_THRESHOLD2 1000
-#define CO2_THRESHOLD3 1500
-
-#define WARNING_DIODE_PIN D8      // NodeMCU pin for red LED
-
-#define MEASURE_INTERVAL 10       // seconds, minimum: 2 
-
-#define SCREEN_WIDTH 128          // OLED display width in pixels
-#define SCREEN_HEIGHT 32          // OLED display height in pixels
 
 const int lcdColumns  = 20;       // LCD: number of columns
 const int lcdRows     = 4;        // LCD: number of rows
 
-#define OLED_RESET LED_BUILTIN    // OLED reset pin, 4 is default
-                                  // -1 if sharing Arduino reset pin
-                                  // using NodeMCU, it is LED_BUILTIN
+const float TempOffset =  TEMP_OFFSET; 
 
-const float TempOffset = 5;       // temperature offset of the SCD30
-                                  // 0 is default value
-                                  // 5 is used in SCD30-library example
-                                  // 5 also works for most of my devices
-
-const int altitudeOffset = 300;   // altitude of place of operation in meters
+const int altitudeOffset = ALTITUDE_OFFSET;   // altitude of place of operation in meters
                                   // Stuttgart: approx 300; Uni Stuttgart: approx 500; Lohne: 67
 
 // update scd30 readings every MEASURE_INTERVAL seconds
@@ -181,6 +157,7 @@ SCD30 airSensor;
     PubSubClient mqttClient(espClient);
     // message to be published to mqtt topic
     char mqttMessage[10];
+    char mqttTopic[28];
   #endif
 #endif
 
@@ -385,20 +362,25 @@ void loop(){
 #if WIFI_MQTT
       // boolean connect (clientID, [username, password])
       // see https://pubsubclient.knolleary.net/api
-      mqttClient.connect(deviceName);
+      mqttClient.connect(deviceName, mqtt_user, mqtt_passwd);
 #if SEND_VCC
       sprintf(mqttMessage, "%d", vdd);
       // boolean publish (topic, payload)
       // publish message to the specified topic
-      mqttClient.publish("esp-co2/co2/vcc", mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "vcc");
+      mqttClient.publish(mqttTopic, mqttMessage );
 #endif
-      mqttClient.publish("esp-co2/co2/hostname", deviceName );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "hostname");
+      mqttClient.publish(mqttTopic, deviceName );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "co2");
       sprintf(mqttMessage, "%6.2f", co2_web);
-      mqttClient.publish("esp-co2/co2/co2", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "temp");
       sprintf(mqttMessage, "%6.2f", temperature_web);
-      mqttClient.publish("esp-co2/co2/temp", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "hum");
       sprintf(mqttMessage, "%6.2f", humidity_web);
-      mqttClient.publish("esp-co2/co2/hum", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
 #endif
 #endif
     }
