@@ -35,18 +35,11 @@
 // -------------------------------------------------------------------
 // Some switches defining general behaviour of the program
 // -------------------------------------------------------------------
-#define WIFI_ENABLED false      // set to true if WiFi is desired, 
-                                // otherwise corresponding code is not compiled
-#if WIFI_ENABLED
-  #define WIFI_WEBSERVER true   // website in your WiFi for data and data logger
-  #define WIFI_MQTT false       // activate MQTT integration in your WiFi
-#endif
-#define DEBUG true              // activate debugging
-                                // true:  print info + data to serial monitor
-                                // false: serial monitor is not used
-#define DISPLAY_OLED            // OLED display
-//#define DISPLAY_LCD           // LCD display
-#define SEND_VCC false
+// moved to config.h
+#include <config.h>  
+#include <credentials.h>  
+
+
 // -------------------------------------------------------------------
 
 
@@ -76,13 +69,16 @@
   #if WIFI_MQTT
     #include <PubSubClient.h>     // allows to send and receive MQTT messages
 
-    //add local MQTT server IP here.
-    IPAddress mqttserver(192, 168, 1, 100);
+    //add local MQTT server IP here. Or in config.h
+    const char* mqttserver    = MQTT_SERVER_IP;
+    const char* mqtt_user     = MQTT_USERNAME; 
+    const char* mqtt_passwd   = MQTT_PASSWORD;
+    const char* mqtt_topic    = MQTT_TOPIC_PREFIX;
   #endif
-  // Replace with your network credentials
-  const char* ssid      = "ENTER_SSID";
-  const char* password  = "ENTER_PASSWORD";
-  const char* deviceName = "ENTER_ESP_DEVICE_NAME";
+  // Replace with your network credentials. Or in config.h
+  const char* ssid      = WIFI_SSID;
+  const char* password  = WIFI_PASSWORD;
+  const char* deviceName = ESP_DEVICE_NAME;
 #endif
 // -------------------------------------------------------------------
 
