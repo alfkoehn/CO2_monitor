@@ -200,8 +200,10 @@ void setup(){
   // initialize I2C
   Wire.begin();
 
+#ifdef WARNING_DIODE_PIN
   // initialize LED pin as an output
   pinMode(WARNING_DIODE_PIN, OUTPUT);
+#endif
 
 #if WIFI_ENABLED
   #if WIFI_MQTT
@@ -307,10 +309,12 @@ void setup(){
   delay(2000);
 #endif
 
+#ifdef WARNING_DIODE_PIN
   // turn warning LED on and off to test it
   digitalWrite(WARNING_DIODE_PIN, HIGH);
   delay(2000*2); 
   digitalWrite(WARNING_DIODE_PIN, LOW);
+#endif
 
   // initialize SCD30
   airSensorSetup();
@@ -365,9 +369,13 @@ void loop(){
 #endif
       // if CO2-value is too high, issue a warning  
       if (co2_new >= CO2_THRESHOLD3) {
+#ifdef WARNING_DIODE_PIN
         digitalWrite(WARNING_DIODE_PIN, HIGH);
+#endif
       } else {
+#ifdef WARNING_DIODE_PIN
         digitalWrite(WARNING_DIODE_PIN, LOW);
+#endif
       }
 #if WIFI_ENABLED
       // updated values for webpage
