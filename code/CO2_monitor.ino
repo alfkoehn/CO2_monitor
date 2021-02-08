@@ -73,7 +73,7 @@
     const char* mqttserver    = MQTT_SERVER_IP;
     const char* mqtt_user     = MQTT_USERNAME; 
     const char* mqtt_passwd   = MQTT_PASSWORD;
-    const char* mqtt_topic    = MQTT_TOPIC_PREFIX;
+    const char* mqtt_topic_prefix    = MQTT_TOPIC_PREFIX;
   #endif
   // Replace with your network credentials. Or in config.h
   const char* ssid      = WIFI_SSID;
@@ -157,6 +157,7 @@ SCD30 airSensor;
     PubSubClient mqttClient(espClient);
     // message to be published to mqtt topic
     char mqttMessage[10];
+    char mqttTopic[28];
   #endif
 #endif
 
@@ -361,20 +362,25 @@ void loop(){
 #if WIFI_MQTT
       // boolean connect (clientID, [username, password])
       // see https://pubsubclient.knolleary.net/api
-      mqttClient.connect(deviceName);
+      mqttClient.connect(deviceName, mqtt_user, mqtt_passwd);
 #if SEND_VCC
       sprintf(mqttMessage, "%d", vdd);
       // boolean publish (topic, payload)
       // publish message to the specified topic
-      mqttClient.publish("esp-co2/co2/vcc", mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "vcc");
+      mqttClient.publish(mqttTopic, mqttMessage );
 #endif
-      mqttClient.publish("esp-co2/co2/hostname", deviceName );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "hostname");
+      mqttClient.publish(mqttTopic, deviceName );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "co2");
       sprintf(mqttMessage, "%6.2f", co2_web);
-      mqttClient.publish("esp-co2/co2/co2", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "temp");
       sprintf(mqttMessage, "%6.2f", temperature_web);
-      mqttClient.publish("esp-co2/co2/temp", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "hum");
       sprintf(mqttMessage, "%6.2f", humidity_web);
-      mqttClient.publish("esp-co2/co2/hum", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
 #endif
 #endif
     }

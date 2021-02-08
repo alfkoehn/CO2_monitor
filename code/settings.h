@@ -11,6 +11,8 @@
 #define MQTT_SERVER_IP "192.168.1.100"
 #define MQTT_TOPIC_PREFIX "esp-co2/co2/"  // MQTT Topic prefix, this prefix will get
                                             // sub-topics vcc, hostname, co2, temp, hum
+                                            // should be 20 characters maximum (because of char mqttTopic[28]; )
+                                            // Please make sure to add / as last character
 #define DEBUG true              // activate debugging
                                 // true:  print info + data to serial monitor
                                 // false: serial monitor is not used
