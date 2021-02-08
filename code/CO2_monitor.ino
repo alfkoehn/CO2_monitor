@@ -35,9 +35,9 @@
 // -------------------------------------------------------------------
 // Some switches defining general behaviour of the program
 // -------------------------------------------------------------------
-// moved to config.h
-#include <config.h>  
-#include <credentials.h>  
+// moved to settings.h
+#include "settings.h"
+#include "credentials.h"  
 
 
 // -------------------------------------------------------------------
@@ -54,7 +54,7 @@
 #ifdef DISPLAY_LCD
   #include <LiquidCrystal_I2C.h>
 #endif
-#include "SparkFun_SCD30_Arduino_Library.h"
+#include <SparkFun_SCD30_Arduino_Library.h>
 
 #include <ESP8266WiFi.h>          // also allows to explicitely turn WiFi off
 #if WIFI_ENABLED
@@ -83,33 +83,13 @@
 // -------------------------------------------------------------------
 
 
-// -------------------------------------------------------------------
-// Hardware configurations and some global constants
-// -------------------------------------------------------------------
-#define CO2_THRESHOLD1 600
-#define CO2_THRESHOLD2 1000
-#define CO2_THRESHOLD3 1500
-
-#define WARNING_DIODE_PIN D8      // NodeMCU pin for red LED
-
-#define MEASURE_INTERVAL 10       // seconds, minimum: 2 
-
-#define SCREEN_WIDTH 128          // OLED display width in pixels
-#define SCREEN_HEIGHT 32          // OLED display height in pixels
 
 const int lcdColumns  = 20;       // LCD: number of columns
 const int lcdRows     = 4;        // LCD: number of rows
 
-#define OLED_RESET LED_BUILTIN    // OLED reset pin, 4 is default
-                                  // -1 if sharing Arduino reset pin
-                                  // using NodeMCU, it is LED_BUILTIN
+const float TempOffset =  TEMP_OFFSET; 
 
-const float TempOffset = 5;       // temperature offset of the SCD30
-                                  // 0 is default value
-                                  // 5 is used in SCD30-library example
-                                  // 5 also works for most of my devices
-
-const int altitudeOffset = 300;   // altitude of place of operation in meters
+const int altitudeOffset = ALTITUDE_OFFSET;   // altitude of place of operation in meters
                                   // Stuttgart: approx 300; Uni Stuttgart: approx 500; Lohne: 67
 
 // update scd30 readings every MEASURE_INTERVAL seconds
