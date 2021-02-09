@@ -166,6 +166,52 @@ SCD30 airSensor;
   int vdd;
 #endif
 
+#ifdef WIFI_MQTT
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+  sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "forceCal");
+  if (strcmp(topic, mqttTopic) == 0) {
+    
+    if ((char)payload[0] == '1') {
+       Serial.println("Forced recalibration via MQTT");
+       DO_FORCED_RECALIBRATION = true;
+    } 
+  }
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!mqttClient.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    //String clientId = "ESP8266Client-";
+    //clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (mqttClient.connect(deviceName, mqtt_user, mqtt_passwd)) { // if (client.connect(clientId.c_str(),"mspn","hau-den-krukkel1")) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      // ... and resubscribe
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "forceCal");
+      mqttClient.subscribe(mqttTopic);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+#endif
+
 void setup(){
   if (DEBUG == true) {
     // initialize serial monitor at baud rate of 115200
@@ -187,6 +233,7 @@ void setup(){
   // configure mqtt server details, after that client is ready
   // create connection to mqtt broker
   mqttClient.setServer(mqttserver, 1883);
+  mqttClient.setCallback(callback);
   #endif
   /* Explicitly set ESP8266 to be a WiFi-client, otherwise, it would, by
      default, try to act as both, client and access-point, and could cause
@@ -307,12 +354,26 @@ void loop(){
   
   unsigned long currentMilliseconds;
 
+#if WIFI_MQTT
+  if (!mqttClient.connected()) {
+    reconnect();          // from PubSubClient Example
+  }                       // Establish MQTT connection
+  mqttClient.loop();
+#endif
   // get milliseconds passed since program started to run
   currentMilliseconds = millis();
 
   // forced recalibration requires 2 minutes of stable environment in advance
   if ((DO_FORCED_RECALIBRATION == true) && (currentMilliseconds > 120000)) {
     forced_recalibration();
+    // Recalibration success? Blink twice ;-)
+    digitalWrite(WARNING_DIODE_PIN, HIGH);
+    delay(150);
+    digitalWrite(WARNING_DIODE_PIN, LOW);
+    delay(50);
+    digitalWrite(WARNING_DIODE_PIN, HIGH);
+    delay(150);
+    digitalWrite(WARNING_DIODE_PIN, LOW);
     DO_FORCED_RECALIBRATION = false;
   }
   
@@ -362,7 +423,9 @@ void loop(){
 #if WIFI_MQTT
       // boolean connect (clientID, [username, password])
       // see https://pubsubclient.knolleary.net/api
-      mqttClient.connect(deviceName, mqtt_user, mqtt_passwd);
+      //mqttClient.connect(deviceName, mqtt_user, mqtt_passwd);
+      //sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "forceCal");
+      //mqttClient.subscribe(mqttTopic);
 #if SEND_VCC
       sprintf(mqttMessage, "%d", vdd);
       // boolean publish (topic, payload)
@@ -383,9 +446,20 @@ void loop(){
       mqttClient.publish(mqttTopic, mqttMessage );
 #endif
 #endif
+    } else {  // If sensor is not ready, blink twice ;-)
+      Serial.println("Sensor not ready...");
+      digitalWrite(WARNING_DIODE_PIN, HIGH);
+      delay(150);
+      digitalWrite(WARNING_DIODE_PIN, LOW);
+      delay(50);
+      digitalWrite(WARNING_DIODE_PIN, HIGH);
+      delay(150);
+      digitalWrite(WARNING_DIODE_PIN, LOW);
     }
   }
-  delay(100);
+#ifndef WIFI_MQTT
+  delay(100); // MQTT uses mqttClient.loop; a delay is not needed
+#endif
 }
 
 
