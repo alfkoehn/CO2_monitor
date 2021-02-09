@@ -35,18 +35,11 @@
 // -------------------------------------------------------------------
 // Some switches defining general behaviour of the program
 // -------------------------------------------------------------------
-#define WIFI_ENABLED false      // set to true if WiFi is desired, 
-                                // otherwise corresponding code is not compiled
-#if WIFI_ENABLED
-  #define WIFI_WEBSERVER true   // website in your WiFi for data and data logger
-  #define WIFI_MQTT false       // activate MQTT integration in your WiFi
-#endif
-#define DEBUG true              // activate debugging
-                                // true:  print info + data to serial monitor
-                                // false: serial monitor is not used
-#define DISPLAY_OLED            // OLED display
-//#define DISPLAY_LCD           // LCD display
-#define SEND_VCC false
+// moved to settings.h
+#include "settings.h"
+#include "credentials.h"  
+
+
 // -------------------------------------------------------------------
 
 
@@ -61,7 +54,7 @@
 #ifdef DISPLAY_LCD
   #include <LiquidCrystal_I2C.h>
 #endif
-#include "SparkFun_SCD30_Arduino_Library.h"
+#include <SparkFun_SCD30_Arduino_Library.h>
 
 #include <ESP8266WiFi.h>          // also allows to explicitely turn WiFi off
 #if WIFI_ENABLED
@@ -76,44 +69,27 @@
   #if WIFI_MQTT
     #include <PubSubClient.h>     // allows to send and receive MQTT messages
 
-    //add local MQTT server IP here.
-    IPAddress mqttserver(192, 168, 1, 100);
+    //add local MQTT server IP here. Or in config.h
+    const char* mqttserver    = MQTT_SERVER_IP;
+    const char* mqtt_user     = MQTT_USERNAME; 
+    const char* mqtt_passwd   = MQTT_PASSWORD;
+    const char* mqtt_topic_prefix    = MQTT_TOPIC_PREFIX;
   #endif
-  // Replace with your network credentials
-  const char* ssid      = "ENTER_SSID";
-  const char* password  = "ENTER_PASSWORD";
-  const char* deviceName = "ENTER_ESP_DEVICE_NAME";
+  // Replace with your network credentials. Or in config.h
+  const char* ssid      = WIFI_SSID;
+  const char* password  = WIFI_PASSWORD;
+  const char* deviceName = ESP_DEVICE_NAME;
 #endif
 // -------------------------------------------------------------------
 
 
-// -------------------------------------------------------------------
-// Hardware configurations and some global constants
-// -------------------------------------------------------------------
-#define CO2_THRESHOLD1 600
-#define CO2_THRESHOLD2 1000
-#define CO2_THRESHOLD3 1500
-
-#define WARNING_DIODE_PIN D8      // NodeMCU pin for red LED
-
-#define MEASURE_INTERVAL 10       // seconds, minimum: 2 
-
-#define SCREEN_WIDTH 128          // OLED display width in pixels
-#define SCREEN_HEIGHT 32          // OLED display height in pixels
 
 const int lcdColumns  = 20;       // LCD: number of columns
 const int lcdRows     = 4;        // LCD: number of rows
 
-#define OLED_RESET LED_BUILTIN    // OLED reset pin, 4 is default
-                                  // -1 if sharing Arduino reset pin
-                                  // using NodeMCU, it is LED_BUILTIN
+const float TempOffset =  TEMP_OFFSET; 
 
-const float TempOffset = 5;       // temperature offset of the SCD30
-                                  // 0 is default value
-                                  // 5 is used in SCD30-library example
-                                  // 5 also works for most of my devices
-
-const int altitudeOffset = 300;   // altitude of place of operation in meters
+const int altitudeOffset = ALTITUDE_OFFSET;   // altitude of place of operation in meters
                                   // Stuttgart: approx 300; Uni Stuttgart: approx 500; Lohne: 67
 
 // update scd30 readings every MEASURE_INTERVAL seconds
@@ -181,12 +157,59 @@ SCD30 airSensor;
     PubSubClient mqttClient(espClient);
     // message to be published to mqtt topic
     char mqttMessage[10];
+    char mqttTopic[28];
   #endif
 #endif
 
 #if SEND_VCC
   ADC_MODE(ADC_VCC);
   int vdd;
+#endif
+
+#ifdef WIFI_MQTT
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+  sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "forceCal");
+  if (strcmp(topic, mqttTopic) == 0) {
+    
+    if ((char)payload[0] == '1') {
+       Serial.println("Forced recalibration via MQTT");
+       DO_FORCED_RECALIBRATION = true;
+    } 
+  }
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!mqttClient.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    //String clientId = "ESP8266Client-";
+    //clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (mqttClient.connect(deviceName, mqtt_user, mqtt_passwd)) { // if (client.connect(clientId.c_str(),"mspn","hau-den-krukkel1")) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      // ... and resubscribe
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "forceCal");
+      mqttClient.subscribe(mqttTopic);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
 #endif
 
 void setup(){
@@ -210,6 +233,7 @@ void setup(){
   // configure mqtt server details, after that client is ready
   // create connection to mqtt broker
   mqttClient.setServer(mqttserver, 1883);
+  mqttClient.setCallback(callback);
   #endif
   /* Explicitly set ESP8266 to be a WiFi-client, otherwise, it would, by
      default, try to act as both, client and access-point, and could cause
@@ -330,12 +354,26 @@ void loop(){
   
   unsigned long currentMilliseconds;
 
+#if WIFI_MQTT
+  if (!mqttClient.connected()) {
+    reconnect();          // from PubSubClient Example
+  }                       // Establish MQTT connection
+  mqttClient.loop();
+#endif
   // get milliseconds passed since program started to run
   currentMilliseconds = millis();
 
   // forced recalibration requires 2 minutes of stable environment in advance
   if ((DO_FORCED_RECALIBRATION == true) && (currentMilliseconds > 120000)) {
     forced_recalibration();
+    // Recalibration success? Blink twice ;-)
+    digitalWrite(WARNING_DIODE_PIN, HIGH);
+    delay(150);
+    digitalWrite(WARNING_DIODE_PIN, LOW);
+    delay(50);
+    digitalWrite(WARNING_DIODE_PIN, HIGH);
+    delay(150);
+    digitalWrite(WARNING_DIODE_PIN, LOW);
     DO_FORCED_RECALIBRATION = false;
   }
   
@@ -385,25 +423,43 @@ void loop(){
 #if WIFI_MQTT
       // boolean connect (clientID, [username, password])
       // see https://pubsubclient.knolleary.net/api
-      mqttClient.connect(deviceName);
+      //mqttClient.connect(deviceName, mqtt_user, mqtt_passwd);
+      //sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "forceCal");
+      //mqttClient.subscribe(mqttTopic);
 #if SEND_VCC
       sprintf(mqttMessage, "%d", vdd);
       // boolean publish (topic, payload)
       // publish message to the specified topic
-      mqttClient.publish("esp-co2/co2/vcc", mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "vcc");
+      mqttClient.publish(mqttTopic, mqttMessage );
 #endif
-      mqttClient.publish("esp-co2/co2/hostname", deviceName );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "hostname");
+      mqttClient.publish(mqttTopic, deviceName );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "co2");
       sprintf(mqttMessage, "%6.2f", co2_web);
-      mqttClient.publish("esp-co2/co2/co2", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "temp");
       sprintf(mqttMessage, "%6.2f", temperature_web);
-      mqttClient.publish("esp-co2/co2/temp", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
+      sprintf(mqttTopic, "%s%s", mqtt_topic_prefix, "hum");
       sprintf(mqttMessage, "%6.2f", humidity_web);
-      mqttClient.publish("esp-co2/co2/hum", mqttMessage );
+      mqttClient.publish(mqttTopic, mqttMessage );
 #endif
 #endif
+    } else {  // If sensor is not ready, blink twice ;-)
+      Serial.println("Sensor not ready...");
+      digitalWrite(WARNING_DIODE_PIN, HIGH);
+      delay(150);
+      digitalWrite(WARNING_DIODE_PIN, LOW);
+      delay(50);
+      digitalWrite(WARNING_DIODE_PIN, HIGH);
+      delay(150);
+      digitalWrite(WARNING_DIODE_PIN, LOW);
     }
   }
-  delay(100);
+#ifndef WIFI_MQTT
+  delay(100); // MQTT uses mqttClient.loop; a delay is not needed
+#endif
 }
 
 
