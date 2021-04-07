@@ -215,6 +215,13 @@ void setup(){
      default, try to act as both, client and access-point, and could cause
      network-issues with other WiFi-devices on your WiFi-network. */
   WiFi.mode(WIFI_STA);
+  // Set Wifi persistent to false,
+  // otherwise on every WiFi.begin the
+  // ssid and password will be written to
+  // the same area in the flash which will
+  // destroy the device in the long run
+  // See: https://github.com/esp8266/Arduino/issues/1054
+  WiFi.persistent(false);
   WiFi.begin(ssid, password);     // connect to Wi-Fi
   if (DEBUG == true)
     Serial.println("Connecting to WiFi");
